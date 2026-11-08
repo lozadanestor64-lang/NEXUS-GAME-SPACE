@@ -4,10 +4,11 @@ Centro de control gaming para Android, pensado primero para el **Motorola Moto G
 No es un limpiador de RAM: solo muestra y aplica lo que Android permite de verdad, y marca como
 «No disponible» lo que no se puede medir.
 
-> **Estado: v0.3.0 en desarrollo (biblioteca y perfiles listos).** Biblioteca de juegos, perfiles persistentes, panel y monitor con datos reales.
+> **Estado: v0.4.0 en desarrollo (biblioteca, perfiles y Shizuku Center listos).** Biblioteca de juegos, perfiles persistentes, panel y monitor con datos reales.
 > Perfiles, biblioteca, Shizuku, panel flotante, red y herramientas están planificados (ver `CHANGELOG.md`).
 
 ## Qué funciona hoy
+- SHIZUKU CENTER: detección real, autorización y diagnóstico (ver `docs/SHIZUKU_GUIDE.md`).
 - Biblioteca de juegos (elige tus juegos, favoritos, inicio, perfil por juego) y perfiles editables.
 - Panel con batería, RAM, almacenamiento, estado térmico del sistema y temperatura de batería (por separado).
 - Monitor con información real y sin inventar FPS.

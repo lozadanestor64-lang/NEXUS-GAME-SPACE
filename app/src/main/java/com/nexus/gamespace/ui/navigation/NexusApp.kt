@@ -30,6 +30,7 @@ import com.nexus.gamespace.features.library.AddGamesScreen
 import com.nexus.gamespace.features.library.LibraryScreen
 import com.nexus.gamespace.features.profiles.ProfileEditScreen
 import com.nexus.gamespace.features.profiles.ProfilesScreen
+import com.nexus.gamespace.features.shizuku.ShizukuScreen
 import com.nexus.gamespace.features.monitor.MonitorScreen
 import com.nexus.gamespace.features.more.MoreScreen
 import com.nexus.gamespace.features.placeholder.PlannedScreen
@@ -100,10 +101,7 @@ fun NexusApp() {
                 PlannedScreen("Laboratorio avanzado", "Funciones experimentales, desactivadas por defecto.", 6,
                     listOf("Resolución y densidad con vista previa y restauración", "Solo si el dispositivo lo admite"))
             }
-            composable(Screen.Shizuku.path) {
-                PlannedScreen("Shizuku", "Modo avanzado opcional.", 6,
-                    listOf("Estado del servicio y del permiso", "Tutorial de depuración inalámbrica", "Lista blanca de operaciones seguras", "Registro de operaciones"))
-            }
+            composable(Screen.Shizuku.path) { ShizukuScreen() }
             composable(Screen.Network.path) {
                 PlannedScreen("Diagnóstico de red", "Pruebas bajo demanda.", 8,
                     listOf("Estado de conexión", "Test de latencia y estabilidad", "Historial y comparación"))

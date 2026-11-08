@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nexus.gamespace.core.NOT_AVAILABLE
 import com.nexus.gamespace.core.formatGb
 import com.nexus.gamespace.features.profiles.ProfilesViewModel
+import com.nexus.gamespace.features.shizuku.ShizukuViewModel
 import com.nexus.gamespace.ui.components.CircularGauge
 import com.nexus.gamespace.ui.components.InfoRow
 import com.nexus.gamespace.ui.components.NexusCard
@@ -23,10 +24,12 @@ import com.nexus.gamespace.ui.components.ScreenColumn
 fun DashboardScreen(
     vm: DeviceViewModel = viewModel(),
     profilesVm: ProfilesViewModel = viewModel(),
+    shizukuVm: ShizukuViewModel = viewModel(),
 ) {
     val s by vm.snapshot.collectAsStateWithLifecycle()
     val activeProfile by profilesVm.activeProfile.collectAsStateWithLifecycle()
     val gamesCount by profilesVm.gamesCount.collectAsStateWithLifecycle()
+    val shizuku by shizukuVm.state.collectAsStateWithLifecycle()
 
     ScreenColumn(
         title = "NEXUS GAME SPACE",
@@ -67,7 +70,7 @@ fun DashboardScreen(
         }
 
         NexusCard {
-            InfoRow("Shizuku", "Sin comprobar (Fase 6)")
+            InfoRow("Shizuku", shizuku.status.label)
             InfoRow("Modo gaming", "Inactivo")
             InfoRow("Perfil activo", activeProfile?.name ?: "Cargando…")
             InfoRow("Juegos en la biblioteca", gamesCount.toString())

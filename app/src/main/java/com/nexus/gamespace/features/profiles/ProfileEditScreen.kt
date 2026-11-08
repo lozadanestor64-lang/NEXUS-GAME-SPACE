@@ -83,7 +83,7 @@ fun ProfileEditScreen(profileId: String, onDone: () -> Unit, vm: ProfilesViewMod
                 DefaultProfiles.palette.forEach { c ->
                     Box(
                         Modifier.size(34.dp).clip(CircleShape).background(Color(c))
-                            .border(if (draft.colorArgb == c) 3.dp else 0.dp, Color.White, CircleShape)
+                            .then(if (draft.colorArgb == c) Modifier.border(3.dp, Color.White, CircleShape) else Modifier)
                             .clickable { draft = draft.copy(colorArgb = c) },
                     )
                 }
