@@ -10,7 +10,7 @@ import com.nexus.gamespace.ui.navigation.Screen
 import androidx.compose.material3.MaterialTheme
 
 private val entries = listOf(
-    Screen.GameConfig, Screen.Lab, Screen.Shizuku, Screen.Network,
+    Screen.Profiles, Screen.Lab, Screen.Shizuku, Screen.Network,
     Screen.Toolbox, Screen.Settings, Screen.About,
 )
 

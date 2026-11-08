@@ -13,14 +13,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nexus.gamespace.core.NOT_AVAILABLE
 import com.nexus.gamespace.core.formatGb
+import com.nexus.gamespace.features.profiles.ProfilesViewModel
 import com.nexus.gamespace.ui.components.CircularGauge
 import com.nexus.gamespace.ui.components.InfoRow
 import com.nexus.gamespace.ui.components.NexusCard
 import com.nexus.gamespace.ui.components.ScreenColumn
 
 @Composable
-fun DashboardScreen(vm: DeviceViewModel = viewModel()) {
+fun DashboardScreen(
+    vm: DeviceViewModel = viewModel(),
+    profilesVm: ProfilesViewModel = viewModel(),
+) {
     val s by vm.snapshot.collectAsStateWithLifecycle()
+    val activeProfile by profilesVm.activeProfile.collectAsStateWithLifecycle()
+    val gamesCount by profilesVm.gamesCount.collectAsStateWithLifecycle()
 
     ScreenColumn(
         title = "NEXUS GAME SPACE",
@@ -63,7 +69,8 @@ fun DashboardScreen(vm: DeviceViewModel = viewModel()) {
         NexusCard {
             InfoRow("Shizuku", "Sin comprobar (Fase 6)")
             InfoRow("Modo gaming", "Inactivo")
-            InfoRow("Perfil activo", "Ninguno (Fase 4)")
+            InfoRow("Perfil activo", activeProfile?.name ?: "Cargando…")
+            InfoRow("Juegos en la biblioteca", gamesCount.toString())
             InfoRow("Juego activo", "Sin detectar (Fase 7)")
         }
 
@@ -73,7 +80,7 @@ fun DashboardScreen(vm: DeviceViewModel = viewModel()) {
             modifier = Modifier.fillMaxWidth(),
         ) { Text("ACTIVAR MODO GAMING", style = MaterialTheme.typography.labelLarge) }
         Text(
-            "Se habilita en la Fase 4, cuando existan perfiles con acciones reales. " +
+            "Se habilita cuando el optimizador tenga acciones reales que aplicar. " +
                 "Hasta entonces la app no aplica ningún cambio al sistema.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

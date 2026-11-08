@@ -8,7 +8,8 @@ enum class Screen(val path: String, val title: String) {
     Optimizer("optimizer", "Optimizar"),
     Monitor("monitor", "Monitor"),
     More("more", "Más"),
-    GameConfig("game_config", "Configuración por juego"),
+    Profiles("profiles", "Perfiles"),
+    AddGames("add_games", "Añadir juegos"),
     Lab("lab", "Laboratorio avanzado"),
     Shizuku("shizuku", "Shizuku"),
     Network("network", "Diagnóstico de red"),
@@ -16,3 +17,8 @@ enum class Screen(val path: String, val title: String) {
     Settings("settings", "Configuración general"),
     About("about", "Acerca de y privacidad"),
 }
+
+/** Ruta con argumento para editar un perfil. */
+const val PROFILE_EDIT_ROUTE = "profile_edit/{id}"
+
+fun profileEditPath(id: String) = "profile_edit/$id"

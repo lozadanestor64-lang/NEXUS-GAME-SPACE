@@ -18,12 +18,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.nexus.gamespace.features.about.AboutScreen
 import com.nexus.gamespace.features.dashboard.DashboardScreen
+import com.nexus.gamespace.features.library.AddGamesScreen
+import com.nexus.gamespace.features.library.LibraryScreen
+import com.nexus.gamespace.features.profiles.ProfileEditScreen
+import com.nexus.gamespace.features.profiles.ProfilesScreen
 import com.nexus.gamespace.features.monitor.MonitorScreen
 import com.nexus.gamespace.features.more.MoreScreen
 import com.nexus.gamespace.features.placeholder.PlannedScreen
@@ -67,9 +73,19 @@ fun NexusApp() {
             }
             composable(Screen.Dashboard.path) { DashboardScreen() }
             composable(Screen.Library.path) {
-                PlannedScreen(
-                    "Juegos", "Tu biblioteca de juegos instalados.", 3,
-                    listOf("Detección de juegos con visibilidad limitada de paquetes", "Favoritos y búsqueda", "Accesos directos", "Perfil por juego"),
+                LibraryScreen(onAddGames = { nav.navigate(Screen.AddGames.path) })
+            }
+            composable(Screen.AddGames.path) { AddGamesScreen(onBack = { nav.popBackStack() }) }
+            composable(Screen.Profiles.path) {
+                ProfilesScreen(onEdit = { nav.navigate(profileEditPath(it)) })
+            }
+            composable(
+                PROFILE_EDIT_ROUTE,
+                arguments = listOf(navArgument("id") { type = NavType.StringType }),
+            ) { entry ->
+                ProfileEditScreen(
+                    profileId = entry.arguments?.getString("id").orEmpty(),
+                    onDone = { nav.popBackStack() },
                 )
             }
             composable(Screen.Optimizer.path) {
@@ -80,10 +96,6 @@ fun NexusApp() {
             }
             composable(Screen.Monitor.path) { MonitorScreen() }
             composable(Screen.More.path) { MoreScreen(onOpen = { nav.navigate(it.path) }) }
-            composable(Screen.GameConfig.path) {
-                PlannedScreen("Configuración por juego", "Ajustes guardados para cada juego.", 4,
-                    listOf("Perfil asignado", "Activación manual o automática", "Restauración de valores"))
-            }
             composable(Screen.Lab.path) {
                 PlannedScreen("Laboratorio avanzado", "Funciones experimentales, desactivadas por defecto.", 6,
                     listOf("Resolución y densidad con vista previa y restauración", "Solo si el dispositivo lo admite"))

@@ -4,10 +4,11 @@ Centro de control gaming para Android, pensado primero para el **Motorola Moto G
 No es un limpiador de RAM: solo muestra y aplica lo que Android permite de verdad, y marca como
 «No disponible» lo que no se puede medir.
 
-> **Estado: Fase 2 de 10.** Hay esqueleto, diseño, navegación, panel con datos reales y monitor.
+> **Estado: v0.3.0 en desarrollo (biblioteca y perfiles listos).** Biblioteca de juegos, perfiles persistentes, panel y monitor con datos reales.
 > Perfiles, biblioteca, Shizuku, panel flotante, red y herramientas están planificados (ver `CHANGELOG.md`).
 
 ## Qué funciona hoy
+- Biblioteca de juegos (elige tus juegos, favoritos, inicio, perfil por juego) y perfiles editables.
 - Panel con batería, RAM, almacenamiento, estado térmico del sistema y temperatura de batería (por separado).
 - Monitor con información real y sin inventar FPS.
 - Pantalla «Acerca de y privacidad».
@@ -35,4 +36,4 @@ Abre la carpeta del proyecto, espera la sincronización de Gradle y pulsa **Run*
 Sin cuentas, sin telemetría, sin publicidad. Todo se guardará localmente.
 
 ## Licencia
-Apache-2.0. Añade el texto oficial como `LICENSE` (en GitHub: *Add file → Create new file → LICENSE* y elige la plantilla Apache 2.0). 
+Apache-2.0. Añade el texto oficial como `LICENSE` (en GitHub: *Add file → Create new file → LICENSE* y elige la plantilla Apache 2.0).

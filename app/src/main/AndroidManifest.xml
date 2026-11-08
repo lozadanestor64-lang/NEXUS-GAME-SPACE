@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Fase 2: la app no solicita ningún permiso. Cada permiso se añadirá solo junto a la función que lo necesite. -->
+    <!-- Fase 2: la app sigue sin solicitar ningún permiso. Cada permiso se añadirá solo junto a la función que lo necesite. -->
+
+    <!-- Visibilidad limitada de paquetes: solo apps con actividad lanzable. No se usa QUERY_ALL_PACKAGES. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
 
     <application
         android:allowBackup="false"
