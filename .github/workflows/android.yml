@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -46,4 +47,3 @@ jobs:
           path: |
             app/build/reports/
             app/build/test-results/
-            
