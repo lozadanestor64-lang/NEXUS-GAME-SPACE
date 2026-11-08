@@ -1,0 +1,14 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures
+.externalNativeBuild/
+.cxx/
+app/build/
+# Nunca subas claves ni credenciales
+*.jks
+*.keystore
+keystore.properties
