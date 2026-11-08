@@ -35,4 +35,4 @@ Abre la carpeta del proyecto, espera la sincronización de Gradle y pulsa **Run*
 Sin cuentas, sin telemetría, sin publicidad. Todo se guardará localmente.
 
 ## Licencia
-Apache-2.0. Añade el texto oficial como `LICENSE` (en GitHub: *Add file → Create new file → LICENSE* y elige la plantilla Apache 2.0).
+Apache-2.0. Añade el texto oficial como `LICENSE` (en GitHub: *Add file → Create new file → LICENSE* y elige la plantilla Apache 2.0). 
