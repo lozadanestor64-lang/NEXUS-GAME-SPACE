@@ -1,0 +1,31 @@
+name: Descomprimir proyecto
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descomprimir y mover a la raíz
+        run: |
+          ZIP=$(ls *.zip | head -n 1)
+          echo "Zip encontrado: $ZIP"
+          unzip -q "$ZIP" -d /tmp/proyecto
+          DIR=$(dirname "$(find /tmp/proyecto -name settings.gradle.kts | head -n 1)")
+          echo "Proyecto en: $DIR"
+          rsync -a --exclude='.github' "$DIR"/ ./
+          git rm -q "$ZIP"
+
+      - name: Guardar cambios
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Descomprimir proyecto en la raíz"
+          git push
