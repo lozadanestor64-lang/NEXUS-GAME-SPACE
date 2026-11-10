@@ -25,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.nexus.gamespace.features.about.AboutScreen
+import com.nexus.gamespace.features.booster.BoosterScreen
 import com.nexus.gamespace.features.dashboard.DashboardScreen
 import com.nexus.gamespace.features.library.AddGamesScreen
 import com.nexus.gamespace.features.library.LibraryScreen
@@ -90,9 +91,10 @@ fun NexusApp() {
                 )
             }
             composable(Screen.Optimizer.path) {
-                PlannedScreen(
-                    "Optimizar", "Evaluación previa y posterior de cada sesión.", 4,
-                    listOf("Diagnóstico antes y después", "Solo acciones autorizadas y reversibles", "Registro de cada cambio", "Sin botón de 'limpiar RAM'"),
+                BoosterScreen(
+                    onOpenLibrary = { nav.navigate(Screen.Library.path) { launchSingleTop = true } },
+                    onOpenProfiles = { nav.navigate(Screen.Profiles.path) },
+                    onOpenShizuku = { nav.navigate(Screen.Shizuku.path) },
                 )
             }
             composable(Screen.Monitor.path) { MonitorScreen() }

@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.4.0 (en desarrollo) — NEXUS BOOSTER, fase 1
+- «Optimizar» pasa a ser BOOSTER CENTER: monitores de batería, RAM y estado térmico; perfil activo; No molestar y brillo con restauración; panel de volumen y de conectividad del sistema; temporizador; notas guardadas.
+- Dos accesos especiales opcionales declarados (No molestar y modificar ajustes); la app comprueba su estado real al volver de Ajustes.
+- Documentación en `docs/BOOSTER_PANEL.md` y `docs/PERMISSIONS.md`.
+- 10 pruebas unitarias nuevas.
+- Pendiente: panel flotante (fase 2), grabación (fase 3), motor de sesiones.
+
 ## 0.4.0 (en desarrollo) — parte 1: Shizuku
 - Módulo `shizuku/` con la API oficial (dev.rikka.shizuku 13.1.5): detección de instalación, servicio (Binder), autorización, versión y entorno (ADB/root), listeners de Binder recibido/perdido y resultado de permiso, diagnóstico y registro de eventos.
 - Pantalla SHIZUKU CENTER con COMPROBAR, SOLICITAR AUTORIZACIÓN, ABRIR SHIZUKU, ACTUALIZAR ESTADO y VER INSTRUCCIONES. Se vuelve a comprobar al regresar a la app.

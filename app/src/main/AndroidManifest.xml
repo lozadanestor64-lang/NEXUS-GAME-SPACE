@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Fase 2: la app sigue sin solicitar ningún permiso. Cada permiso se añadirá solo junto a la función que lo necesite. -->
+    <!-- Accesos especiales opcionales. No se conceden al instalar: el usuario los concede en Ajustes y solo
+         cuando usa la función (No molestar y brillo del BOOSTER). Ver docs/PERMISSIONS.md. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 
     <!-- Visibilidad limitada de paquetes: solo apps con actividad lanzable. No se usa QUERY_ALL_PACKAGES. -->
     <queries>

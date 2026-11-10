@@ -8,6 +8,7 @@ No es un limpiador de RAM: solo muestra y aplica lo que Android permite de verda
 > Perfiles, biblioteca, Shizuku, panel flotante, red y herramientas están planificados (ver `CHANGELOG.md`).
 
 ## Qué funciona hoy
+- BOOSTER CENTER: No molestar, brillo, volumen, conectividad, temporizador y notas con restauración (ver `docs/BOOSTER_PANEL.md`).
 - SHIZUKU CENTER: detección real, autorización y diagnóstico (ver `docs/SHIZUKU_GUIDE.md`).
 - Biblioteca de juegos (elige tus juegos, favoritos, inicio, perfil por juego) y perfiles editables.
 - Panel con batería, RAM, almacenamiento, estado térmico del sistema y temperatura de batería (por separado).

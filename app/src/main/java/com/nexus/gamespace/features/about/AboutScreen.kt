@@ -23,7 +23,7 @@ fun AboutScreen() {
         NexusCard {
             Text("Privacidad", style = MaterialTheme.typography.titleMedium)
             listOf(
-                "No solicita permisos en esta versión.",
+                "Dos accesos especiales opcionales (No molestar y modificar ajustes para el brillo): solo se piden al usar esa función y puedes revocarlos en Ajustes.",
                 "No usa Internet ni envía datos a ningún sitio.",
                 "Sin cuentas, sin publicidad y sin telemetría.",
                 "No requiere root ni desbloquear el bootloader.",
