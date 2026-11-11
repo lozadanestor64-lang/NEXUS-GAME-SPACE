@@ -35,6 +35,8 @@ data class BoosterRestoreState(
     val dndPrevious: Int? = null,
     val brightnessPrevious: Int? = null,
     val brightnessModePrevious: Int? = null,
+    val rotationPrevious: Int? = null,
 ) {
-    val hasChanges: Boolean get() = dndPrevious != null || brightnessPrevious != null
+    val hasChanges: Boolean
+        get() = dndPrevious != null || brightnessPrevious != null || rotationPrevious != null
 }

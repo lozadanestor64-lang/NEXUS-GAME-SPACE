@@ -64,5 +64,6 @@ class BoosterLogicTest {
         assertFalse(BoosterRestoreState().hasChanges)
         assertTrue(BoosterRestoreState(dndPrevious = 1).hasChanges)
         assertTrue(BoosterRestoreState(brightnessPrevious = 100, brightnessModePrevious = 0).hasChanges)
+        assertTrue(BoosterRestoreState(rotationPrevious = 1).hasChanges)
     }
 }

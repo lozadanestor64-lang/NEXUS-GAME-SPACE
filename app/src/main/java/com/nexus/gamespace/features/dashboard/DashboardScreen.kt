@@ -30,6 +30,7 @@ fun DashboardScreen(
     val activeProfile by profilesVm.activeProfile.collectAsStateWithLifecycle()
     val gamesCount by profilesVm.gamesCount.collectAsStateWithLifecycle()
     val shizuku by shizukuVm.state.collectAsStateWithLifecycle()
+    val overlayRunning by com.nexus.gamespace.overlay.OverlayService.running.collectAsStateWithLifecycle()
 
     ScreenColumn(
         title = "NEXUS GAME SPACE",
@@ -71,6 +72,7 @@ fun DashboardScreen(
 
         NexusCard {
             InfoRow("Shizuku", shizuku.status.label)
+            InfoRow("Panel flotante", if (overlayRunning) "Activo" else "Inactivo")
             InfoRow("Modo gaming", "Inactivo")
             InfoRow("Perfil activo", activeProfile?.name ?: "Cargando…")
             InfoRow("Juegos en la biblioteca", gamesCount.toString())

@@ -65,7 +65,32 @@ class BoosterActions(context: Context) {
     fun writeSettingsIntent(): Intent =
         Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:${ctx.packageName}"))
 
+    // ---- Rotación automática (acceso especial: WRITE_SETTINGS) ----
+    fun autoRotateEnabled(): Boolean? = try {
+        Settings.System.getInt(ctx.contentResolver, Settings.System.ACCELEROMETER_ROTATION) == 1
+    } catch (e: Settings.SettingNotFoundException) {
+        null
+    }
+
+    fun setAutoRotate(enabled: Boolean): Boolean {
+        if (!canWriteSettings()) return false
+        return try {
+            Settings.System.putInt(ctx.contentResolver, Settings.System.ACCELEROMETER_ROTATION, if (enabled) 1 else 0)
+            true
+        } catch (e: SecurityException) {
+            false
+        }
+    }
+
     // ---- Volumen: abre el panel de volumen del sistema ----
+    fun adjustVolume(raise: Boolean) {
+        audio.adjustStreamVolume(
+            AudioManager.STREAM_MUSIC,
+            if (raise) AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER,
+            AudioManager.FLAG_SHOW_UI,
+        )
+    }
+
     fun showVolumePanel() {
         audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI)
     }

@@ -14,6 +14,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -25,12 +26,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.nexus.gamespace.features.about.AboutScreen
-import com.nexus.gamespace.features.booster.BoosterScreen
 import com.nexus.gamespace.features.dashboard.DashboardScreen
 import com.nexus.gamespace.features.library.AddGamesScreen
 import com.nexus.gamespace.features.library.LibraryScreen
 import com.nexus.gamespace.features.profiles.ProfileEditScreen
 import com.nexus.gamespace.features.profiles.ProfilesScreen
+import com.nexus.gamespace.features.settings.SettingsScreen
 import com.nexus.gamespace.features.shizuku.ShizukuScreen
 import com.nexus.gamespace.features.monitor.MonitorScreen
 import com.nexus.gamespace.features.more.MoreScreen
@@ -50,10 +51,21 @@ private val barItems = listOf(
 )
 
 @Composable
-fun NexusApp() {
+fun NexusApp(requestedRoute: String? = null, onRouteHandled: () -> Unit = {}) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     val current = entry?.destination?.route
+
+    // Ruta pedida desde el panel flotante (p. ej. la biblioteca): se abre saltando la bienvenida.
+    LaunchedEffect(requestedRoute) {
+        requestedRoute?.let { route ->
+            nav.navigate(route) {
+                popUpTo(Screen.Welcome.path) { inclusive = true }
+                launchSingleTop = true
+            }
+            onRouteHandled()
+        }
+    }
 
     Scaffold(
         containerColor = NexusBlack,
@@ -91,10 +103,9 @@ fun NexusApp() {
                 )
             }
             composable(Screen.Optimizer.path) {
-                BoosterScreen(
-                    onOpenLibrary = { nav.navigate(Screen.Library.path) { launchSingleTop = true } },
-                    onOpenProfiles = { nav.navigate(Screen.Profiles.path) },
-                    onOpenShizuku = { nav.navigate(Screen.Shizuku.path) },
+                PlannedScreen(
+                    "Optimizar", "Evaluación previa y posterior de cada sesión.", 4,
+                    listOf("Diagnóstico antes y después", "Solo acciones autorizadas y reversibles", "Registro de cada cambio", "Sin botón de 'limpiar RAM'"),
                 )
             }
             composable(Screen.Monitor.path) { MonitorScreen() }
@@ -112,10 +123,7 @@ fun NexusApp() {
                 PlannedScreen("Herramientas", "Utilidades para jugar.", 8,
                     listOf("Temporizador y cronómetro", "Notas por juego", "Prueba táctil y de pantalla", "Diagnóstico de almacenamiento"))
             }
-            composable(Screen.Settings.path) {
-                PlannedScreen("Configuración general", "Preferencias de la app y permisos.", 6,
-                    listOf("Gestor de permisos (nombre, motivo, riesgo, estado)", "Panel flotante opcional", "Restaurar ajustes"))
-            }
+            composable(Screen.Settings.path) { SettingsScreen() }
             composable(Screen.About.path) { AboutScreen() }
         }
     }

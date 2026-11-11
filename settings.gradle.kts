@@ -12,5 +12,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "PronosticoNogoya"
+
+rootProject.name = "NEXUS-GAME-SPACE"
 include(":app")

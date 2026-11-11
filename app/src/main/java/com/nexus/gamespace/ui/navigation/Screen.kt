@@ -5,7 +5,7 @@ enum class Screen(val path: String, val title: String) {
     Welcome("welcome", "Bienvenida"),
     Dashboard("dashboard", "Panel"),
     Library("library", "Juegos"),
-    Optimizer("optimizer", "Booster"),
+    Optimizer("optimizer", "Optimizar"),
     Monitor("monitor", "Monitor"),
     More("more", "Más"),
     Profiles("profiles", "Perfiles"),

@@ -8,6 +8,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.nexus.gamespace.domain.BoosterRestoreState
 import com.nexus.gamespace.domain.GameEntry
 import com.nexus.gamespace.domain.GameProfile
+import com.nexus.gamespace.domain.OverlayPrefs
+import com.nexus.gamespace.domain.OverlaySide
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -41,7 +43,16 @@ class NexusRepository(context: Context) {
     }
 
     val boosterRestore: Flow<BoosterRestoreState> = store.data.map {
-        BoosterRestoreState(it[DND_PREV], it[BRIGHT_PREV], it[BRIGHT_MODE_PREV])
+        BoosterRestoreState(it[DND_PREV], it[BRIGHT_PREV], it[BRIGHT_MODE_PREV], it[ROTATION_PREV])
+    }
+    val overlayPrefs: Flow<OverlayPrefs> = store.data.map {
+        OverlayPrefs(
+            side = if (it[OV_SIDE] == "left") OverlaySide.LEFT else OverlaySide.RIGHT,
+            alphaPercent = (it[OV_ALPHA] ?: 92).coerceIn(OverlayPrefs.ALPHA_MIN, OverlayPrefs.ALPHA_MAX),
+            scalePercent = it[OV_SCALE] ?: 100,
+            tabY = it[OV_TAB_Y] ?: -1,
+            hiddenTools = (it[OV_HIDDEN] ?: "").split(",").filter { id -> id.isNotBlank() }.toSet(),
+        )
     }
     val notes: Flow<String> = store.data.map { it[NOTES] ?: "" }
 
@@ -70,6 +81,41 @@ class NexusRepository(context: Context) {
         }
     }
 
+    suspend fun saveRotationPreviousIfAbsent(value: Int) {
+        store.edit { prefs -> if (prefs[ROTATION_PREV] == null) prefs[ROTATION_PREV] = value }
+    }
+
+    suspend fun clearRotationPrevious() {
+        store.edit { prefs -> prefs.remove(ROTATION_PREV) }
+    }
+
+    suspend fun setOverlayPosition(side: OverlaySide, tabY: Int) {
+        store.edit { prefs ->
+            prefs[OV_SIDE] = if (side == OverlaySide.LEFT) "left" else "right"
+            prefs[OV_TAB_Y] = tabY
+        }
+    }
+
+    suspend fun setOverlaySide(side: OverlaySide) {
+        store.edit { prefs -> prefs[OV_SIDE] = if (side == OverlaySide.LEFT) "left" else "right" }
+    }
+
+    suspend fun setOverlayAlpha(percent: Int) {
+        store.edit { prefs -> prefs[OV_ALPHA] = percent.coerceIn(OverlayPrefs.ALPHA_MIN, OverlayPrefs.ALPHA_MAX) }
+    }
+
+    suspend fun setOverlayScale(percent: Int) {
+        store.edit { prefs -> prefs[OV_SCALE] = percent }
+    }
+
+    suspend fun setOverlayToolHidden(toolId: String, hidden: Boolean) {
+        store.edit { prefs ->
+            val current = (prefs[OV_HIDDEN] ?: "").split(",").filter { it.isNotBlank() }.toMutableSet()
+            if (hidden) current.add(toolId) else current.remove(toolId)
+            prefs[OV_HIDDEN] = current.joinToString(",")
+        }
+    }
+
     suspend fun saveNotes(text: String) {
         store.edit { prefs -> prefs[NOTES] = text }
     }
@@ -79,6 +125,12 @@ class NexusRepository(context: Context) {
         val BRIGHT_PREV = intPreferencesKey("booster_brightness_prev")
         val BRIGHT_MODE_PREV = intPreferencesKey("booster_brightness_mode_prev")
         val NOTES = stringPreferencesKey("booster_notes")
+        val ROTATION_PREV = intPreferencesKey("booster_rotation_prev")
+        val OV_SIDE = stringPreferencesKey("overlay_side")
+        val OV_ALPHA = intPreferencesKey("overlay_alpha")
+        val OV_SCALE = intPreferencesKey("overlay_scale")
+        val OV_TAB_Y = intPreferencesKey("overlay_tab_y")
+        val OV_HIDDEN = stringPreferencesKey("overlay_hidden_tools")
         val GAMES = stringPreferencesKey("games_json")
         val PROFILES = stringPreferencesKey("profiles_json")
         val ACTIVE_PROFILE = stringPreferencesKey("active_profile")

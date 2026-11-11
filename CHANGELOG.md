@@ -1,11 +1,13 @@
 # Cambios
 
-## 0.4.0 (en desarrollo) — NEXUS BOOSTER, fase 1
-- «Optimizar» pasa a ser BOOSTER CENTER: monitores de batería, RAM y estado térmico; perfil activo; No molestar y brillo con restauración; panel de volumen y de conectividad del sistema; temporizador; notas guardadas.
-- Dos accesos especiales opcionales declarados (No molestar y modificar ajustes); la app comprueba su estado real al volver de Ajustes.
-- Documentación en `docs/BOOSTER_PANEL.md` y `docs/PERMISSIONS.md`.
-- 10 pruebas unitarias nuevas.
-- Pendiente: panel flotante (fase 2), grabación (fase 3), motor de sesiones.
+## 0.4.0 (en desarrollo) — NEXUS BOOSTER: panel flotante sobre el juego
+- Corrección de diseño: el Booster **no** es una pestaña ni una pantalla. Se retira la pantalla Booster y «Optimizar» vuelve a ser la pantalla preparada original.
+- Nuevo `OverlayService` (servicio en primer plano, `TYPE_APPLICATION_OVERLAY`): pestaña lateral arrastrable que cambia de lado, se abre con toque o deslizando hacia dentro, y panel expandido para vertical y horizontal con animación.
+- Herramientas del panel: monitor, perfiles, apps favoritas, No molestar, brillo, volumen, rotación, panel Wi-Fi, temporizador, notas y biblioteca. Los cambios temporales guardan el valor original y se restauran.
+- Configuración general ahora es real: activar/desactivar el panel, lado, opacidad, tamaño, herramientas visibles, estado de permisos y restaurar cambios.
+- El Panel muestra si el panel flotante está activo.
+- No probado en dispositivo. Captura y grabación (MediaProjection) pendientes.
+- 20 pruebas unitarias nuevas entre gestos, cronómetro y restauración.
 
 ## 0.4.0 (en desarrollo) — parte 1: Shizuku
 - Módulo `shizuku/` con la API oficial (dev.rikka.shizuku 13.1.5): detección de instalación, servicio (Binder), autorización, versión y entorno (ADB/root), listeners de Binder recibido/perdido y resultado de permiso, diagnóstico y registro de eventos.
