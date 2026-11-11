@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   unzip:
@@ -12,20 +13,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Descomprimir y mover a la raíz
+      - name: Reemplazar el proyecto por el zip más reciente
         run: |
-          ZIP=$(ls *.zip | head -n 1)
-          echo "Zip encontrado: $ZIP"
+          ZIP=$(ls *.zip | sort -V | tail -n 1)
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+          echo "Usando: $ZIP"
+          rm -rf /tmp/proyecto
+          mkdir /tmp/proyecto
           unzip -q "$ZIP" -d /tmp/proyecto
           DIR=$(dirname "$(find /tmp/proyecto -name settings.gradle.kts | head -n 1)")
-          echo "Proyecto en: $DIR"
-          rsync -a --exclude='.github' "$DIR"/ ./
-          git rm -q "$ZIP"
+          rsync -a --delete --exclude='.git' --exclude='.github' --exclude='*.zip' "$DIR"/ ./
+          git rm -q --ignore-unmatch *.zip
 
       - name: Guardar cambios
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add -A
-          git commit -m "Descomprimir proyecto en la raíz"
+          git commit -m "Reemplazar proyecto con $ZIP" || echo "Sin cambios"
           git push
+
+      - name: Lanzar compilación
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run android.yml --ref ${{ github.ref_name }}
