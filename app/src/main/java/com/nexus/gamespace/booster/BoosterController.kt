@@ -5,12 +5,18 @@ import android.content.Context
 import android.os.SystemClock
 import com.nexus.gamespace.core.BoosterActions
 import com.nexus.gamespace.core.DeviceInfoProvider
+import com.nexus.gamespace.core.InstalledAppsProvider
 import com.nexus.gamespace.core.NetworkInfoProvider
 import com.nexus.gamespace.core.NetworkKind
 import com.nexus.gamespace.data.NexusRepository
 import com.nexus.gamespace.domain.BoosterMath
 import com.nexus.gamespace.domain.BoosterRestoreState
+import com.nexus.gamespace.domain.CrosshairConfig
+import com.nexus.gamespace.domain.CrosshairSettings
 import com.nexus.gamespace.domain.DeviceSnapshot
+import com.nexus.gamespace.domain.FavoritesLogic
+import com.nexus.gamespace.domain.InstalledApp
+import com.nexus.gamespace.domain.OverlayPrefs
 import com.nexus.gamespace.domain.GameEntry
 import com.nexus.gamespace.domain.GameProfile
 import com.nexus.gamespace.domain.Stopwatch
@@ -48,6 +54,7 @@ class BoosterController(context: Context, private val scope: CoroutineScope) {
     private val actions = BoosterActions(ctx)
     private val provider = DeviceInfoProvider(ctx)
     private val network = NetworkInfoProvider(ctx)
+    private val appsProvider = InstalledAppsProvider(ctx)
 
     /** Lectura cada 2 s, y solo mientras alguien la observa (panel abierto o pantalla visible). */
     val live: StateFlow<LiveReadings?> = flow {
@@ -66,8 +73,11 @@ class BoosterController(context: Context, private val scope: CoroutineScope) {
     val restoreState: StateFlow<BoosterRestoreState> =
         repo.boosterRestore.stateIn(scope, SharingStarted.WhileSubscribed(5_000), BoosterRestoreState())
     val favorites: StateFlow<List<GameEntry>> =
-        repo.games.map { list -> list.filter { it.favorite }.take(8) }
+        repo.games.map { list -> FavoritesLogic.ordered(list) }
             .stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val installedApps = MutableStateFlow<List<InstalledApp>>(emptyList())
+    val crosshair: StateFlow<CrosshairSettings> =
+        repo.crosshair.stateIn(scope, SharingStarted.WhileSubscribed(5_000), CrosshairSettings())
 
     val access = MutableStateFlow(readAccess())
     val message = MutableStateFlow<String?>(null)
@@ -100,10 +110,55 @@ class BoosterController(context: Context, private val scope: CoroutineScope) {
 
     fun markLaunched(packageName: String) {
         scope.launch {
+            repo.updateCrosshair { it.copy(activeGame = packageName) }
             repo.updateGames { list ->
                 list.map { if (it.packageName == packageName) it.copy(lastLaunchedAt = System.currentTimeMillis()) else it }
             }
         }
+    }
+
+    // ---- Favoritos del panel (misma biblioteca que la app) ----
+    /** Lee las apps lanzables (visibilidad limitada de paquetes). Se llama al abrir AGREGAR JUEGOS. */
+    fun loadInstalledApps() {
+        scope.launch(Dispatchers.Default) { installedApps.value = appsProvider.launchableApps() }
+    }
+
+    fun addFavorites(apps: List<InstalledApp>) {
+        scope.launch { repo.updateGames { list -> FavoritesLogic.addFavorites(list, apps, System.currentTimeMillis()) } }
+    }
+
+    fun removeFavorite(packageName: String) {
+        scope.launch { repo.updateGames { list -> FavoritesLogic.removeFavorite(list, packageName) } }
+    }
+
+    fun moveFavorite(packageName: String, delta: Int) {
+        scope.launch { repo.updateGames { list -> FavoritesLogic.move(list, packageName, delta) } }
+    }
+
+    fun saveAppearance(prefs: OverlayPrefs) {
+        scope.launch { repo.saveOverlayAppearance(prefs) }
+    }
+
+    fun setSide(side: com.nexus.gamespace.domain.OverlaySide) {
+        scope.launch { repo.setOverlaySide(side) }
+    }
+
+    // ---- Mira ----
+    fun setCrosshairEnabled(enabled: Boolean) {
+        scope.launch { repo.updateCrosshair { it.copy(enabled = enabled) } }
+    }
+
+    /** game == null guarda la mira global; con un paquete, guarda una mira propia de ese juego. */
+    fun saveCrosshair(game: String?, config: CrosshairConfig) {
+        scope.launch { repo.updateCrosshair { it.withConfig(game, config) } }
+    }
+
+    fun clearCrosshairOverride(game: String) {
+        scope.launch { repo.updateCrosshair { it.withoutOverride(game) } }
+    }
+
+    fun setCrosshairExcluded(game: String, excluded: Boolean) {
+        scope.launch { repo.updateCrosshair { it.withExcluded(game, excluded) } }
     }
 
     fun adjustVolume(raise: Boolean) = actions.adjustVolume(raise)

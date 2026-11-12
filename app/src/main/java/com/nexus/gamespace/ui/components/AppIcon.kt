@@ -11,6 +11,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
@@ -22,7 +23,12 @@ import kotlinx.coroutines.withContext
 
 /** Icono original de una app instalada. Si no se puede cargar, muestra un recuadro neutro. */
 @Composable
-fun AppIcon(packageName: String, size: Dp = 56.dp, modifier: Modifier = Modifier) {
+fun AppIcon(
+    packageName: String,
+    size: Dp = 56.dp,
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(14.dp),
+) {
     val context = LocalContext.current
     val bitmap by produceState<ImageBitmap?>(initialValue = null, packageName) {
         value = withContext(Dispatchers.IO) {
@@ -31,7 +37,6 @@ fun AppIcon(packageName: String, size: Dp = 56.dp, modifier: Modifier = Modifier
             }.getOrNull()
         }
     }
-    val shape = RoundedCornerShape(14.dp)
     val bmp = bitmap
     if (bmp != null) {
         Image(bitmap = bmp, contentDescription = null, modifier = modifier.size(size).clip(shape))

@@ -42,6 +42,8 @@ import com.nexus.gamespace.MainActivity
 import com.nexus.gamespace.R
 import com.nexus.gamespace.booster.BoosterController
 import com.nexus.gamespace.data.NexusRepository
+import com.nexus.gamespace.domain.AnimationMode
+import com.nexus.gamespace.domain.CrosshairSettings
 import com.nexus.gamespace.domain.OverlayGestures
 import com.nexus.gamespace.domain.OverlayPrefs
 import com.nexus.gamespace.domain.OverlaySide
@@ -110,6 +112,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     private var mode = Mode.NONE
     private var tabView: View? = null
     private var panelRoot: PanelRoot? = null
+    private var crosshairView: CrosshairView? = null
     private var observing = false
     private var closing = false
     private var notesFocusable = false
@@ -176,6 +179,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     }
 
     override fun onDestroy() {
+        removeCrosshair()
         removeTab()
         removePanelNow()
         scope.cancel()
@@ -197,6 +201,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             repo.overlayPrefs.collect { newPrefs ->
                 if (newPrefs == prefs) return@collect
                 prefs = newPrefs
+                updateMaxHeight()
                 when (mode) {
                     Mode.TAB -> showTab()
                     Mode.PANEL -> panelRoot?.let { wm.updateViewLayout(it, panelParams()) }
@@ -205,6 +210,61 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             }
         }
         scope.launch { shizuku.state.collect { shizukuLabel = it.status.label } }
+        scope.launch { repo.crosshair.collect { applyCrosshair(it) } }
+    }
+
+    // ------------------------------------------------------------------ mira
+
+    /**
+     * La mira es una ventana pequeña y no táctil en el centro de la pantalla. Solo dibuja formas fijas.
+     * Con alpha de ventana ≤ 0.8 Android 12+ deja pasar los toques al juego que hay debajo.
+     */
+    private fun applyCrosshair(settings: CrosshairSettings) {
+        if (!settings.shouldShow(settings.activeGame)) {
+            removeCrosshair()
+            return
+        }
+        val config = settings.configFor(settings.activeGame)
+        val d = resources.displayMetrics.density
+        val existing = crosshairView
+        if (existing == null) {
+            val cfg = config
+            val view = CrosshairView(this).apply { this.config = cfg }
+            val lp = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT,
+            ).apply {
+                gravity = Gravity.CENTER
+                x = (config.offsetX * d).toInt()
+                y = (config.offsetY * d).toInt()
+                alpha = 0.8f
+            }
+            try {
+                wm.addView(view, lp)
+                crosshairView = view
+            } catch (e: RuntimeException) {
+                crosshairView = null
+            }
+        } else {
+            existing.config = config
+            (existing.layoutParams as? WindowManager.LayoutParams)?.let { lp ->
+                lp.x = (config.offsetX * d).toInt()
+                lp.y = (config.offsetY * d).toInt()
+                try { wm.updateViewLayout(existing, lp) } catch (e: IllegalArgumentException) { crosshairView = null }
+            }
+        }
+    }
+
+    private fun removeCrosshair() {
+        crosshairView?.let {
+            try { wm.removeView(it) } catch (e: IllegalArgumentException) { /* ya quitada */ }
+        }
+        crosshairView = null
     }
 
     // ------------------------------------------------------------------ pestaña lateral
@@ -226,7 +286,8 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
     private fun updateMaxHeight() {
         val (_, sh) = screenSize()
-        maxHeightDp = (sh / density() - 32f).coerceAtLeast(200f)
+        val available = sh / density() - 2f * prefs.marginDp - 8f
+        maxHeightDp = (available * prefs.heightPercent / 100f).coerceAtLeast(200f)
     }
 
     private fun showTab() {
@@ -354,7 +415,8 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     private fun panelParams(): WindowManager.LayoutParams {
         val (sw, sh) = screenSize()
         val d = density()
-        val width = if (sw > sh) minOf(sw * 0.82f, 780f * d) else minOf(sw - 16f * d, 400f * d)
+        val baseWidth = if (sw > sh) minOf(sw * 0.82f, 780f * d) else minOf(sw - 16f * d, 400f * d)
+        val width = baseWidth * prefs.widthPercent / 100f
         var flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
             WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
         // Solo se permite el foco (para escribir una nota) mientras la sección de notas está abierta.
@@ -364,8 +426,8 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, flags, PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or if (prefs.side == OverlaySide.LEFT) Gravity.START else Gravity.END
-            x = (8f * d).toInt()
-            y = (12f * d).toInt()
+            x = (prefs.marginDp * d).toInt()
+            y = ((prefs.marginDp + 4) * d).toInt()
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
         }
     }
@@ -400,7 +462,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                     onOpenLibrary = { openLibrary() },
                     onLaunchGame = { launchGame(it) },
                     onOpenSettings = { openSettingsIntent(it) },
-                    onNotesOpen = { setNotesFocusable(it) },
+                    onNeedsKeyboard = { setNotesFocusable(it) },
                 )
             }
         }
@@ -429,7 +491,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         closing = true
         panelVisible = false
         scope.launch {
-            delay(CLOSE_ANIMATION_MS)
+            delay(if (prefs.animation == AnimationMode.OFF) 0L else CLOSE_ANIMATION_MS)
             controller.message.value = null
             showTab()
         }

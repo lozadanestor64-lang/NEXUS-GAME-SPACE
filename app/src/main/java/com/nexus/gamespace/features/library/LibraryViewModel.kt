@@ -99,6 +99,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun markLaunched(pkg: String) = viewModelScope.launch {
+        repo.updateCrosshair { it.copy(activeGame = pkg) }
         repo.updateGames { list ->
             list.map { if (it.packageName == pkg) it.copy(lastLaunchedAt = System.currentTimeMillis()) else it }
         }

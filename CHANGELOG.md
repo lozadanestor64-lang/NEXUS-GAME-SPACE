@@ -1,5 +1,20 @@
 # Cambios
 
+## 0.4.0 (en desarrollo) — Game Space overlay, grupo 2a: MIRA
+- Herramienta MIRA: retícula cosmética y fija (punto, cruz, círculo, cruz con punto, círculo con punto, personalizada) en una ventana no táctil sobre el juego.
+- Color, tamaño, grosor, separación, transparencia y posición con calibración, vista previa, mira por juego y exclusión de juegos. Se guarda en el teléfono.
+- Sin detección de enemigos, lectura de pantalla, automatización de disparos ni inyección de toques.
+- 14 pruebas unitarias nuevas.
+- Pendiente: colores personalizados y RGB MODE (2b), estilos REDMAGIC/XIAOMI, grabación y captura.
+
+## 0.4.0 (en desarrollo) — Game Space overlay, grupo 1
+- Panel rediseñado: tarjetas y textos compactos, encabezado y VOLVER AL JUEGO siempre visibles, tres zonas en horizontal.
+- Botón + (circular) con ventana AGREGAR JUEGOS: icono original, buscador y selección múltiple. Favoritos circulares, permanentes, reordenables y eliminables, compartidos con la biblioteca.
+- Anillos animados desde cero hasta el valor real y entre cambios; modos de animación (desactivadas, reducidas, lentas, normales, rápidas).
+- Engranaje con CONFIGURACIÓN DEL PANEL: tamaño (compacto, normal, grande, personalizado), posición y animaciones, con vista previa en vivo y guardado con DataStore.
+- 12 pruebas unitarias nuevas (favoritos, orden, preajustes).
+- Pendiente: mira, colores, RGB, estilos REDMAGIC/XIAOMI, grabación y captura.
+
 ## 0.4.0 (en desarrollo) — NEXUS BOOSTER: panel flotante sobre el juego
 - Corrección de diseño: el Booster **no** es una pestaña ni una pantalla. Se retira la pantalla Booster y «Optimizar» vuelve a ser la pantalla preparada original.
 - Nuevo `OverlayService` (servicio en primer plano, `TYPE_APPLICATION_OVERLAY`): pestaña lateral arrastrable que cambia de lado, se abre con toque o deslizando hacia dentro, y panel expandido para vertical y horizontal con animación.

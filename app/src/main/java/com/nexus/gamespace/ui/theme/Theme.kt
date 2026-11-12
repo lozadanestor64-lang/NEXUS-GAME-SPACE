@@ -1,6 +1,7 @@
 package com.nexus.gamespace.ui.theme
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
@@ -19,10 +20,10 @@ private val NexusColorScheme = darkColorScheme(
 )
 
 @Composable
-fun NexusTheme(content: @Composable () -> Unit) {
+fun NexusTheme(typography: Typography = NexusTypography, content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = NexusColorScheme,
-        typography = NexusTypography,
+        typography = typography,
         content = content,
     )
 }

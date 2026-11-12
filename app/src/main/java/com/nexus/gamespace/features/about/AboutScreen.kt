@@ -23,7 +23,8 @@ fun AboutScreen() {
         NexusCard {
             Text("Privacidad", style = MaterialTheme.typography.titleMedium)
             listOf(
-                "Dos accesos especiales opcionales (No molestar y modificar ajustes para el brillo): solo se piden al usar esa función y puedes revocarlos en Ajustes.",
+                "Accesos especiales opcionales (superposición, No molestar y modificar ajustes): solo se piden al usar esa función y puedes revocarlos en Ajustes.",
+                "El panel flotante es un servicio en primer plano que solo se inicia cuando tú lo activas, y se detiene al desactivarlo.",
                 "No usa Internet ni envía datos a ningún sitio.",
                 "Sin cuentas, sin publicidad y sin telemetría.",
                 "No requiere root ni desbloquear el bootloader.",

@@ -1,5 +1,8 @@
 package com.nexus.gamespace.data
 
+import com.nexus.gamespace.domain.CrosshairConfig
+import com.nexus.gamespace.domain.CrosshairSettings
+import com.nexus.gamespace.domain.CrosshairStyle
 import com.nexus.gamespace.domain.DefaultProfiles
 import com.nexus.gamespace.domain.GameEntry
 import com.nexus.gamespace.domain.GameProfile
@@ -23,6 +26,7 @@ object JsonCodec {
                     put("profile", g.profileId ?: JSONObject.NULL)
                     put("added", g.addedAt)
                     put("last", g.lastLaunchedAt ?: JSONObject.NULL)
+                    put("forder", g.favoriteOrder)
                 }
             )
         }
@@ -44,6 +48,7 @@ object JsonCodec {
                     profileId = if (o.isNull("profile")) null else o.optString("profile"),
                     addedAt = o.optLong("added", 0L),
                     lastLaunchedAt = if (o.isNull("last")) null else o.optLong("last"),
+                    favoriteOrder = o.optInt("forder", 0),
                 )
             }
         } catch (e: JSONException) {
@@ -99,6 +104,76 @@ object JsonCodec {
                     doNotDisturb = o.optBoolean("dnd", base.doNotDisturb),
                 ),
             )
+        }
+    }
+
+    // ---- Mira ----
+
+    private fun configToJson(c: CrosshairConfig) = JSONObject().apply {
+        put("style", c.style.name)
+        put("color", c.colorArgb)
+        put("size", c.sizeDp)
+        put("thickness", c.thicknessDp)
+        put("gap", c.gapDp)
+        put("alpha", c.alphaPercent)
+        put("ox", c.offsetX)
+        put("oy", c.offsetY)
+        put("cdot", c.customDot)
+        put("ccross", c.customCross)
+        put("ccircle", c.customCircle)
+    }
+
+    private fun configFromJson(o: JSONObject?): CrosshairConfig {
+        if (o == null) return CrosshairConfig()
+        val d = CrosshairConfig()
+        return CrosshairConfig(
+            style = CrosshairStyle.entries.firstOrNull { it.name == o.optString("style") } ?: d.style,
+            colorArgb = o.optLong("color", d.colorArgb),
+            sizeDp = o.optInt("size", d.sizeDp),
+            thicknessDp = o.optInt("thickness", d.thicknessDp),
+            gapDp = o.optInt("gap", d.gapDp),
+            alphaPercent = o.optInt("alpha", d.alphaPercent),
+            offsetX = o.optInt("ox", d.offsetX),
+            offsetY = o.optInt("oy", d.offsetY),
+            customDot = o.optBoolean("cdot", d.customDot),
+            customCross = o.optBoolean("ccross", d.customCross),
+            customCircle = o.optBoolean("ccircle", d.customCircle),
+        ).clamped()
+    }
+
+    fun encodeCrosshair(s: CrosshairSettings): String = JSONObject().apply {
+        put("enabled", s.enabled)
+        put("active", s.activeGame ?: JSONObject.NULL)
+        put("global", configToJson(s.global))
+        put("perGame", JSONObject().also { o -> s.perGame.forEach { (pkg, cfg) -> o.put(pkg, configToJson(cfg)) } })
+        put("excluded", JSONArray(s.excluded.toList()))
+    }.toString()
+
+    fun decodeCrosshair(raw: String?): CrosshairSettings {
+        if (raw.isNullOrBlank()) return CrosshairSettings()
+        return try {
+            val o = JSONObject(raw)
+            val perGame = mutableMapOf<String, CrosshairConfig>()
+            o.optJSONObject("perGame")?.let { map ->
+                val keys = map.keys()
+                while (keys.hasNext()) {
+                    val pkg = keys.next()
+                    perGame[pkg] = configFromJson(map.optJSONObject(pkg))
+                }
+            }
+            val excluded = mutableSetOf<String>()
+            o.optJSONArray("excluded")?.let { arr ->
+                for (i in 0 until arr.length()) arr.optString(i).takeIf { it.isNotBlank() }?.let { excluded.add(it) }
+            }
+            CrosshairSettings(
+                enabled = o.optBoolean("enabled", false),
+                global = configFromJson(o.optJSONObject("global")),
+                perGame = perGame,
+                excluded = excluded,
+                activeGame = if (o.isNull("active")) null else o.optString("active").ifBlank { null },
+            )
+        } catch (e: JSONException) {
+            CrosshairSettings()
         }
     }
 }
