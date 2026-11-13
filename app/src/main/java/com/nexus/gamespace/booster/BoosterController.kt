@@ -14,6 +14,7 @@ import com.nexus.gamespace.domain.BoosterRestoreState
 import com.nexus.gamespace.domain.CrosshairConfig
 import com.nexus.gamespace.domain.CrosshairSettings
 import com.nexus.gamespace.domain.DeviceSnapshot
+import com.nexus.gamespace.domain.OverlayColors
 import com.nexus.gamespace.domain.FavoritesLogic
 import com.nexus.gamespace.domain.InstalledApp
 import com.nexus.gamespace.domain.OverlayPrefs
@@ -76,6 +77,8 @@ class BoosterController(context: Context, private val scope: CoroutineScope) {
         repo.games.map { list -> FavoritesLogic.ordered(list) }
             .stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val installedApps = MutableStateFlow<List<InstalledApp>>(emptyList())
+    val colors: StateFlow<OverlayColors> =
+        repo.overlayColors.stateIn(scope, SharingStarted.WhileSubscribed(5_000), OverlayColors())
     val crosshair: StateFlow<CrosshairSettings> =
         repo.crosshair.stateIn(scope, SharingStarted.WhileSubscribed(5_000), CrosshairSettings())
 
@@ -141,6 +144,11 @@ class BoosterController(context: Context, private val scope: CoroutineScope) {
 
     fun setSide(side: com.nexus.gamespace.domain.OverlaySide) {
         scope.launch { repo.setOverlaySide(side) }
+    }
+
+    // ---- Colores ----
+    fun saveColors(colors: OverlayColors) {
+        scope.launch { repo.saveOverlayColors(colors) }
     }
 
     // ---- Mira ----

@@ -9,7 +9,8 @@ Se activa y configura en **Más → Configuración general**.
 | 0 | Servicio, pestaña lateral, panel, herramientas básicas | Escrito; el panel ya se mostró en un teléfono Samsung (Android 14) |
 | 1 | Rediseño compacto, botón +, AGREGAR JUEGOS, favoritos circulares y reordenables, animaciones, CONFIGURACIÓN DEL PANEL (tamaño, posición, animaciones) | **Escrito en esta entrega; sin compilar ni probar** |
 | 2a | MIRA (retícula cosmética) | **Escrita en esta entrega; sin compilar ni probar** |
-| 2b | Colores personalizados y RGB MODE | No empezado |
+| 2b | **COLOR STUDIO** (corrige el texto negro sobre negro) | **Escrito en esta entrega; sin compilar ni probar** |
+| 2c | RGB MODE y Chroma | No empezado |
 | 3 | Estilos REDMAGIC PANEL y XIAOMI PANEL | No empezado |
 | 4 | Grabación de pantalla y captura (MediaProjection), tarjetas reducibles individualmente | No empezado |
 
@@ -23,6 +24,23 @@ No se ha probado en un Motorola Moto G15 ni con Android 15. La superposición no
 - **Anillos animados:** batería, RAM libre y estado térmico. Al abrir crecen desde cero hasta el valor real; cuando el dato cambia se animan desde el valor anterior. El anillo térmico muestra el nivel del sistema por pasos (Normal, Atención, Elevado, Crítico), no una temperatura de CPU. No hay animaciones infinitas.
 - **Animaciones:** Desactivadas, Reducidas, Lentas, Normales o Rápidas.
 - **Engranaje (arriba):** abre CONFIGURACIÓN DEL PANEL con tamaño (Compacto, Normal, Grande o Personalizado con control de tamaño global, ancho, alto máximo, texto, iconos, espaciado, márgenes y opacidad), posición (lado) y animaciones. El propio panel hace de vista previa en tiempo real. Todo se guarda con DataStore.
+
+## Grupo 2b: COLOR STUDIO y corrección del texto negro
+**Causa del error:** en el panel flotante no hay un contenedor que fije el color del contenido, así que todo `Text` sin color explícito usaba el negro por defecto de Compose y se perdía sobre el fondo oscuro.
+
+**Corrección:** el panel fija ahora un color de contenido y un tema de Material 3 construidos desde una paleta central (`OvPalette`). Todos los componentes leen sus colores de ahí, incluidos chips, interruptores, casillas, deslizadores, campos de texto, botones, iconos y anillos. Los textos del panel llevan siempre un color explícito de la paleta.
+
+**Color Studio** (engranaje → COLOR STUDIO): 24 colores personalizables en tres grupos.
+- *Texto:* títulos, principal, secundario, descripciones, botones, controles, indicadores, números, valores de monitorización y acento.
+- *Fondos:* panel completo, configuración, tarjetas, botones, menús y ventanas emergentes (AGREGAR JUEGOS).
+- *Otros:* bordes, iconos, barras, anillos, indicadores e interruptores, botones activos, iluminación y efectos de selección.
+- Selector con código HEX, deslizadores de matiz, saturación y brillo, y 16 colores rápidos.
+- 6 paletas predeterminadas (NEXUS rojo, Azul hielo, Verde matrix, Morado neón, Naranja fuego y Alto contraste) y restaurar un color o todos.
+- Vista previa en directo: el propio panel cambia al instante. Se guarda con DataStore y afecta a todas las pantallas del overlay, incluida la pestaña lateral.
+- **Contraste:** avisos cuando un texto tiene menos de 4,5:1 sobre su fondo y **contraste automático** (activado por defecto) que sustituye por blanco o negro cualquier texto por debajo de 3:1. Así ningún texto queda invisible aunque el usuario elija mal.
+- Las alertas térmicas mantienen sus colores de alerta (verde, ámbar, rojo) y no se pueden personalizar.
+
+Limitaciones: la pantalla principal de la app (fuera del overlay) conserva su tema; el RGB, los estilos REDMAGIC/XIAOMI y las herramientas de voz y sonido llegan en entregas siguientes.
 
 ## Grupo 2a: MIRA
 Herramienta «Mira» en el panel (interruptor + AJUSTAR MIRA). Es una ventana pequeña, **no táctil**, en el centro de la pantalla que solo dibuja formas fijas.
@@ -77,7 +95,7 @@ No se muestran: ventilador, frecuencias desbloqueadas, FPS ni controles de otros
 - Captura y grabación: Android solo permite capturar otras apps con MediaProjection y consentimiento; fase posterior.
 
 ## Archivos nuevos
-`overlay/OverlayService.kt`, `overlay/OverlayPanel.kt`, `overlay/OverlayUi.kt`, `overlay/OverlayAddGames.kt`, `overlay/OverlayPanelSettings.kt`, `overlay/OverlayCrosshair.kt`, `overlay/CrosshairView.kt`, `domain/Crosshair.kt`, `booster/BoosterController.kt`, `domain/Overlay.kt`, `domain/Stopwatch.kt`, `core/BoosterActions.kt`, `core/NetworkInfoProvider.kt`, `features/settings/SettingsScreen.kt`, `features/settings/SettingsViewModel.kt`, `res/drawable/ic_stat_nexus.xml`, `OverlayGesturesTest.kt`, `BoosterLogicTest.kt`, `FavoritesAndPrefsTest.kt`, `CrosshairTest.kt`.
+`overlay/OverlayService.kt`, `overlay/OverlayPanel.kt`, `overlay/OverlayUi.kt`, `overlay/OverlayAddGames.kt`, `overlay/OverlayPanelSettings.kt`, `overlay/OverlayCrosshair.kt`, `overlay/OverlayPalette.kt`, `overlay/OverlayColorStudio.kt`, `domain/OverlayColors.kt`, `overlay/CrosshairView.kt`, `domain/Crosshair.kt`, `booster/BoosterController.kt`, `domain/Overlay.kt`, `domain/Stopwatch.kt`, `core/BoosterActions.kt`, `core/NetworkInfoProvider.kt`, `features/settings/SettingsScreen.kt`, `features/settings/SettingsViewModel.kt`, `res/drawable/ic_stat_nexus.xml`, `OverlayGesturesTest.kt`, `BoosterLogicTest.kt`, `FavoritesAndPrefsTest.kt`, `CrosshairTest.kt`, `ColorStudioTest.kt`.
 
 ## Archivos modificados
 `data/NexusRepository.kt`, `data/JsonCodec.kt`, `domain/GameEntry.kt`, `domain/Overlay.kt`, `ui/components/AppIcon.kt`, `ui/theme/Theme.kt`, `MainActivity.kt` (ruta pedida desde el panel), `ui/navigation/NexusApp.kt` y `Screen.kt` (Configuración ahora es real; **Optimizar vuelve a ser la pantalla preparada original**), `features/dashboard/DashboardScreen.kt` (estado del panel), `AndroidManifest.xml`, `features/about/AboutScreen.kt`.

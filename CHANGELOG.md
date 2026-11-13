@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.4.0 (en desarrollo) — COLOR STUDIO y corrección del texto negro
+- **Corregido:** texto negro sobre fondo negro en el panel flotante. Causa: `Text` sin color usaba el negro por defecto. Ahora todo el panel usa una paleta central.
+- Color Studio con 24 colores (texto, fondos y otros elementos), selector HEX/HSV, 6 paletas, vista previa en directo y restaurar.
+- Avisos de contraste y contraste automático para que el texto nunca desaparezca.
+- Los colores llegan a todas las pantallas del overlay y a la pestaña lateral; se guardan con DataStore.
+- 28 pruebas unitarias nuevas.
+- Pendiente: RGB MODE, estilos REDMAGIC/XIAOMI, Macro Guard y detección de Free Fire, Voice Studio, Sound Board.
+
 ## 0.4.0 (en desarrollo) — Game Space overlay, grupo 2a: MIRA
 - Herramienta MIRA: retícula cosmética y fija (punto, cruz, círculo, cruz con punto, círculo con punto, personalizada) en una ventana no táctil sobre el juego.
 - Color, tamaño, grosor, separación, transparencia y posición con calibración, vista previa, mira por juego y exclusión de juegos. Se guarda en el teléfono.

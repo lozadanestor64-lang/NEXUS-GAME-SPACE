@@ -1,11 +1,14 @@
 package com.nexus.gamespace.data
 
+import com.nexus.gamespace.domain.ColorMath
+import com.nexus.gamespace.domain.ColorRole
 import com.nexus.gamespace.domain.CrosshairConfig
 import com.nexus.gamespace.domain.CrosshairSettings
 import com.nexus.gamespace.domain.CrosshairStyle
 import com.nexus.gamespace.domain.DefaultProfiles
 import com.nexus.gamespace.domain.GameEntry
 import com.nexus.gamespace.domain.GameProfile
+import com.nexus.gamespace.domain.OverlayColors
 import com.nexus.gamespace.domain.ProfileSettings
 import com.nexus.gamespace.domain.ProfileType
 import org.json.JSONArray
@@ -174,6 +177,32 @@ object JsonCodec {
             )
         } catch (e: JSONException) {
             CrosshairSettings()
+        }
+    }
+
+    // ---- Colores del panel ----
+
+    fun encodeColors(c: OverlayColors): String = JSONObject().apply {
+        put("auto", c.autoContrast)
+        put("colors", JSONObject().also { o -> c.values.forEach { (role, argb) -> o.put(role.name, ColorMath.toHex(argb)) } })
+    }.toString()
+
+    /** Ignora los roles desconocidos y los valores que no son colores válidos. */
+    fun decodeColors(raw: String?): OverlayColors {
+        if (raw.isNullOrBlank()) return OverlayColors()
+        return try {
+            val o = JSONObject(raw)
+            val values = mutableMapOf<ColorRole, Long>()
+            o.optJSONObject("colors")?.let { map ->
+                ColorRole.entries.forEach { role ->
+                    if (map.has(role.name)) {
+                        ColorMath.parseHex(map.optString(role.name))?.let { values[role] = it }
+                    }
+                }
+            }
+            OverlayColors(values = values, autoContrast = o.optBoolean("auto", true))
+        } catch (e: JSONException) {
+            OverlayColors()
         }
     }
 }

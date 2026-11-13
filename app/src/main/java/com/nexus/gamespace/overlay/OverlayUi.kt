@@ -18,11 +18,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -39,7 +48,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -50,10 +58,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nexus.gamespace.domain.AnimationMode
-import com.nexus.gamespace.ui.theme.NexusBorder
-import com.nexus.gamespace.ui.theme.NexusRed
-import com.nexus.gamespace.ui.theme.NexusSurfaceHigh
-import com.nexus.gamespace.ui.theme.NexusTextSecondary
 import kotlin.math.roundToInt
 
 /** Valores de diseño que el panel reparte a sus componentes. */
@@ -72,6 +76,30 @@ val OverlayTypography = Typography(
     labelSmall = TextStyle(fontFamily = FontFamily.SansSerif, fontSize = 10.sp, lineHeight = 13.sp),
 )
 
+// ----------------------------------------------------------------------------- textos
+
+/** Texto principal del panel. Siempre lleva un color explícito de la paleta: nunca el negro por defecto. */
+@Composable
+fun OvText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.bodyMedium,
+    color: Color = LocalOvPalette.current.text,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+    textAlign: TextAlign? = null,
+) {
+    Text(text, modifier = modifier, style = style, color = color, maxLines = maxLines, overflow = overflow, textAlign = textAlign)
+}
+
+/** Texto de ayuda o descripción (color «Descripciones»). */
+@Composable
+fun OvHint(text: String, modifier: Modifier = Modifier) {
+    Text(text, modifier = modifier, style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description)
+}
+
+// ----------------------------------------------------------------------------- contenedores
+
 @Composable
 fun OvCard(
     modifier: Modifier = Modifier,
@@ -79,18 +107,19 @@ fun OvCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val spacing = LocalOverlaySpacing.current
+    val p = LocalOvPalette.current
     val shape = RoundedCornerShape(12.dp)
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color(0xFF121217).copy(alpha = 0.9f))
-            .border(1.dp, NexusBorder, shape)
+            .background(p.cardBg)
+            .border(1.dp, p.border, shape)
             .padding(spacing),
         verticalArrangement = Arrangement.spacedBy(spacing * 0.75f),
     ) {
         if (title != null) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text(title, style = MaterialTheme.typography.titleMedium, color = p.title)
         }
         content()
     }
@@ -104,19 +133,24 @@ fun OvButton(
     filled: Boolean = true,
     enabled: Boolean = true,
 ) {
+    val p = LocalOvPalette.current
     val shape = RoundedCornerShape(10.dp)
     val bg = when {
-        !enabled -> NexusSurfaceHigh
-        filled -> NexusRed
-        else -> Color.Transparent
+        !enabled -> p.menuBg
+        filled -> p.activeButton
+        else -> p.buttonBg
     }
-    val fg = if (enabled) Color.White else NexusTextSecondary
+    val fg = when {
+        !enabled -> p.description
+        filled -> p.buttonText
+        else -> p.controlText
+    }
     Box(
         modifier = modifier
             .heightIn(min = 34.dp)
             .clip(shape)
             .background(bg)
-            .then(if (!filled) Modifier.border(1.dp, if (enabled) NexusRed else NexusBorder, shape) else Modifier)
+            .then(if (!filled) Modifier.border(1.dp, if (enabled) p.activeButton else p.border, shape) else Modifier)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
@@ -128,7 +162,7 @@ fun OvButton(
     }
 }
 
-/** Botón circular perfecto con contenido propio (icono o texto corto). */
+/** Botón circular perfecto con contenido propio (icono o texto corto). El contenido hereda el color de iconos. */
 @Composable
 fun OvRoundButton(
     description: String,
@@ -138,23 +172,77 @@ fun OvRoundButton(
     size: Dp = 32.dp,
     content: @Composable () -> Unit,
 ) {
+    val p = LocalOvPalette.current
     Box(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(if (filled) NexusRed else Color.Transparent)
-            .then(if (!filled) Modifier.border(1.dp, NexusRed.copy(alpha = 0.8f), CircleShape) else Modifier)
+            .background(if (filled) p.activeButton else p.buttonBg)
+            .then(if (!filled) Modifier.border(1.dp, p.activeButton.copy(alpha = 0.8f), CircleShape) else Modifier)
             .clickable(role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
-    ) { content() }
+    ) {
+        CompositionLocalProvider(LocalContentColor provides (if (filled) p.buttonText else p.icons)) { content() }
+    }
 }
 
 @Composable
+fun OvSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val p = LocalOvPalette.current
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = p.buttonText,
+            checkedTrackColor = p.indicators,
+            checkedBorderColor = p.indicators,
+            uncheckedThumbColor = p.textSecondary,
+            uncheckedTrackColor = p.bars,
+            uncheckedBorderColor = p.border,
+        ),
+    )
+}
+
+@Composable
+fun OvCheckbox(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean = true) {
+    val p = LocalOvPalette.current
+    Checkbox(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        enabled = enabled,
+        colors = CheckboxDefaults.colors(
+            checkedColor = p.indicators,
+            uncheckedColor = p.border,
+            checkmarkColor = p.buttonText,
+        ),
+    )
+}
+
+@Composable
+fun OvChip(selected: Boolean, onClick: () -> Unit, label: @Composable () -> Unit) {
+    val p = LocalOvPalette.current
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = label,
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = p.menuBg,
+            labelColor = p.controlText,
+            selectedContainerColor = p.selection.copy(alpha = 0.30f),
+            selectedLabelColor = p.controlText,
+        ),
+    )
+}
+
+// ----------------------------------------------------------------------------- datos
+
+@Composable
 fun OvStat(label: String, value: String, modifier: Modifier = Modifier) {
+    val p = LocalOvPalette.current
     Column(modifier) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = p.description, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = p.monitorValues, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -168,17 +256,23 @@ fun OvStatPair(aLabel: String, aValue: String, bLabel: String, bValue: String) {
 
 @Composable
 fun OvSlider(label: String, value: Int, range: IntRange, unit: String, onFinished: (Int) -> Unit) {
+    val p = LocalOvPalette.current
     var current by remember(value) { mutableFloatStateOf(value.toFloat()) }
     Column {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, style = MaterialTheme.typography.bodyMedium)
-            Text("${current.roundToInt()} $unit", style = MaterialTheme.typography.bodyMedium, color = NexusTextSecondary)
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = p.text)
+            Text("${current.roundToInt()} $unit", style = MaterialTheme.typography.bodyMedium, color = p.numbers)
         }
         Slider(
             value = current,
             onValueChange = { current = it },
             onValueChangeFinished = { onFinished(current.roundToInt()) },
             valueRange = range.first.toFloat()..range.last.toFloat(),
+            colors = SliderDefaults.colors(
+                thumbColor = p.activeButton,
+                activeTrackColor = p.activeButton,
+                inactiveTrackColor = p.bars,
+            ),
         )
     }
 }
@@ -187,17 +281,20 @@ fun OvSlider(label: String, value: Int, range: IntRange, unit: String, onFinishe
  * Anillo indicador. Al abrirse crece desde cero hasta el valor real y, cuando el dato cambia, se anima
  * desde el valor anterior al nuevo. Con las animaciones desactivadas salta directo al valor.
  * fraction == null significa «no disponible»: se dibuja solo la pista.
+ * color == null usa el color «Anillos»; el anillo térmico pasa su propio color de alerta.
  */
 @Composable
 fun OvRing(
     fraction: Float?,
     label: String,
     center: (Float) -> String,
-    color: Color,
     modifier: Modifier = Modifier,
+    color: Color? = null,
     ringSize: Dp = 62.dp,
 ) {
+    val p = LocalOvPalette.current
     val mode = LocalAnimation.current
+    val ringColor = color ?: p.rings
     val progress = remember { Animatable(0f) }
     val target = (fraction ?: 0f).coerceIn(0f, 1f)
     LaunchedEffect(target, mode) {
@@ -208,28 +305,30 @@ fun OvRing(
         }
     }
     val glow = mode != AnimationMode.OFF && mode != AnimationMode.REDUCED
+    val track = p.bars
+    val glowColor = if (color == null) p.glow else ringColor
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(ringSize), contentAlignment = Alignment.Center) {
             Canvas(Modifier.size(ringSize)) {
-                val stroke = this.size.minDimension * 0.11f
+                val stroke = size.minDimension * 0.11f
                 val inset = stroke
-                val arcSize = Size(this.size.width - inset * 2, this.size.height - inset * 2)
+                val arcSize = Size(size.width - inset * 2, size.height - inset * 2)
                 val topLeft = Offset(inset, inset)
                 drawArc(
-                    color = NexusBorder, startAngle = 135f, sweepAngle = 270f, useCenter = false,
+                    color = track, startAngle = 135f, sweepAngle = 270f, useCenter = false,
                     topLeft = topLeft, size = arcSize, style = Stroke(stroke, cap = StrokeCap.Round),
                 )
                 if (fraction != null) {
                     if (glow) {
                         drawArc(
-                            color = color.copy(alpha = 0.22f), startAngle = 135f, sweepAngle = 270f * progress.value,
+                            color = glowColor.copy(alpha = 0.22f), startAngle = 135f, sweepAngle = 270f * progress.value,
                             useCenter = false, topLeft = topLeft, size = arcSize,
                             style = Stroke(stroke * 1.7f, cap = StrokeCap.Round),
                         )
                     }
                     drawArc(
-                        color = color, startAngle = 135f, sweepAngle = 270f * progress.value,
+                        color = ringColor, startAngle = 135f, sweepAngle = 270f * progress.value,
                         useCenter = false, topLeft = topLeft, size = arcSize,
                         style = Stroke(stroke, cap = StrokeCap.Round),
                     )
@@ -238,10 +337,10 @@ fun OvRing(
             Text(
                 if (fraction == null) "—" else center(progress.value),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = p.numbers,
                 maxLines = 1,
             )
         }
-        Text(label, style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = p.indicatorText, maxLines = 1)
     }
 }

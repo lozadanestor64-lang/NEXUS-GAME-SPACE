@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -60,6 +61,7 @@ import com.nexus.gamespace.core.NOT_AVAILABLE
 import com.nexus.gamespace.core.formatGb
 import com.nexus.gamespace.domain.AnimationMode
 import com.nexus.gamespace.domain.GameEntry
+import com.nexus.gamespace.domain.OverlayColors
 import com.nexus.gamespace.domain.OverlayPrefs
 import com.nexus.gamespace.domain.OverlaySide
 import com.nexus.gamespace.domain.OverlayTool
@@ -73,13 +75,14 @@ import com.nexus.gamespace.ui.theme.NexusTheme
 import com.nexus.gamespace.ui.theme.NexusWarn
 import kotlin.math.roundToInt
 
-private enum class PanelScreen { MAIN, ADD_GAMES, SETTINGS, CROSSHAIR }
+private enum class PanelScreen { MAIN, ADD_GAMES, SETTINGS, CROSSHAIR, COLORS }
 
 /** Panel gaming que se dibuja sobre el juego. Todos sus controles llaman a acciones reales. */
 @Composable
 fun OverlayPanel(
     controller: BoosterController,
     prefs: OverlayPrefs,
+    colors: OverlayColors,
     shizukuLabel: String,
     landscape: Boolean,
     maxHeightDp: Float,
@@ -109,13 +112,16 @@ fun OverlayPanel(
         else -> slideOutHorizontally(tween(240)) { w -> if (towardsLeft) -w else w } + fadeOut(tween(240))
     }
 
+    val palette = remember(colors) { OvPalette(colors) }
     CompositionLocalProvider(
+        LocalOvPalette provides palette,
+        LocalContentColor provides palette.text,
         LocalDensity provides scaled,
         LocalOverlaySpacing provides prefs.spacingDp.dp,
         LocalIconScale provides prefs.iconScalePercent / 100f,
         LocalAnimation provides prefs.animation,
     ) {
-        NexusTheme(typography = OverlayTypography) {
+        NexusTheme(typography = OverlayTypography, colorScheme = overlayColorScheme(palette)) {
             AnimatedVisibility(visible = visible, enter = enter, exit = exit) {
                 PanelSurface(
                     controller, prefs, shizukuLabel, landscape, maxHeightDp,
@@ -144,11 +150,12 @@ private fun PanelSurface(
     val message by controller.message.collectAsState()
     val restore by controller.restoreState.collectAsState()
     val spacing = LocalOverlaySpacing.current
+    val palette = LocalOvPalette.current
     val shape = RoundedCornerShape(18.dp)
 
     var screen by remember { mutableStateOf(PanelScreen.MAIN) }
     var notesOpen by remember { mutableStateOf(false) }
-    val needsKeyboard = notesOpen || screen == PanelScreen.ADD_GAMES
+    val needsKeyboard = notesOpen || screen == PanelScreen.ADD_GAMES || screen == PanelScreen.COLORS
     // El teclado necesita foco de ventana; solo se concede mientras hace falta.
     LaunchedEffect(needsKeyboard) { onNeedsKeyboard(needsKeyboard) }
     DisposableEffect(Unit) { onDispose { onNeedsKeyboard(false) } }
@@ -158,8 +165,14 @@ private fun PanelSurface(
             .fillMaxWidth()
             .heightIn(max = maxHeightDp.dp)
             .clip(shape)
-            .background(Color(0xFF07070A).copy(alpha = prefs.alphaPercent / 100f))
-            .border(1.dp, NexusRed.copy(alpha = 0.6f), shape)
+            .background(
+                when (screen) {
+                    PanelScreen.MAIN -> palette.panelBg
+                    PanelScreen.ADD_GAMES -> palette.dialogBg
+                    else -> palette.settingsBg
+                }.copy(alpha = prefs.alphaPercent / 100f)
+            )
+            .border(1.dp, palette.glow.copy(alpha = 0.65f), shape)
             .padding(spacing),
         verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
@@ -167,32 +180,33 @@ private fun PanelSurface(
         if (screen == PanelScreen.MAIN) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    "NEXUS GAME SPACE", style = MaterialTheme.typography.titleLarge, color = NexusRed,
+                    "NEXUS GAME SPACE", style = MaterialTheme.typography.titleLarge, color = palette.accentText,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                 )
                 OvRoundButton("Agregar juegos", { screen = PanelScreen.ADD_GAMES }, filled = true) {
-                    Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White)
+                    Icon(Icons.Filled.Add, contentDescription = null)
                 }
                 OvRoundButton("Configuración del panel", { screen = PanelScreen.SETTINGS }) {
-                    Icon(Icons.Filled.Settings, contentDescription = null, tint = Color.White)
+                    Icon(Icons.Filled.Settings, contentDescription = null)
                 }
                 OvRoundButton("Cambiar de lado", onSwitchSide) {
-                    Text("⇄", color = Color.White, style = MaterialTheme.typography.labelLarge)
+                    Text("⇄", style = MaterialTheme.typography.labelLarge)
                 }
                 OvButton("OCULTAR", onHide, filled = false)
             }
         } else {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OvRoundButton("Volver al panel", { screen = PanelScreen.MAIN }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Color.White)
+                OvRoundButton("Volver al panel", { screen = if (screen == PanelScreen.COLORS) PanelScreen.SETTINGS else PanelScreen.MAIN }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                 }
                 Text(
                     when (screen) {
                         PanelScreen.ADD_GAMES -> "AGREGAR JUEGOS"
                         PanelScreen.CROSSHAIR -> "MIRA"
+                        PanelScreen.COLORS -> "COLOR STUDIO"
                         else -> "CONFIGURACIÓN DEL PANEL"
                     },
-                    style = MaterialTheme.typography.titleLarge, color = NexusRed,
+                    style = MaterialTheme.typography.titleLarge, color = palette.accentText,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -208,8 +222,13 @@ private fun PanelSurface(
                 )
                 PanelScreen.CROSSHAIR -> CrosshairContent(controller)
                 PanelScreen.ADD_GAMES -> AddGamesContent(controller) { screen = PanelScreen.MAIN }
+                PanelScreen.COLORS -> ColorStudioContent(
+                    colors = colors,
+                    onChange = { controller.saveColors(it) },
+                )
                 PanelScreen.SETTINGS -> PanelSettingsContent(
                     prefs = prefs,
+                    onOpenColors = { screen = PanelScreen.COLORS },
                     onSave = { controller.saveAppearance(it) },
                     onSide = { controller.setSide(it) },
                 )
@@ -312,23 +331,23 @@ private fun MonitorTool(controller: BoosterController, shizukuLabel: String) {
     OvCard(title = "Monitor") {
         val l = live
         if (l == null) {
-            Text("Leyendo…", style = MaterialTheme.typography.bodyMedium, color = NexusTextSecondary)
+            Text("Leyendo…", style = MaterialTheme.typography.bodyMedium, color = LocalOvPalette.current.description)
         } else {
             val s = l.snapshot
             val ring = (60 * iconScale).dp
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 OvRing(
                     fraction = s.batteryPercent?.let { it / 100f }, label = "Batería",
-                    center = { f -> "${(f * 100).roundToInt()}%" }, color = NexusRed, ringSize = ring,
+                    center = { f -> "${(f * 100).roundToInt()}%" }, ringSize = ring,
                 )
                 OvRing(
                     fraction = 1f - s.ramUsedFraction, label = "RAM libre",
-                    center = { f -> "${(f * 100).roundToInt()}%" }, color = NexusRed, ringSize = ring,
+                    center = { f -> "${(f * 100).roundToInt()}%" }, ringSize = ring,
                 )
                 OvRing(
                     fraction = s.thermal?.let { thermalFraction(it) }, label = "Térmico",
                     center = { _ -> s.thermal?.label ?: NOT_AVAILABLE },
-                    color = s.thermal?.let { thermalColor(it) } ?: NexusRed, ringSize = ring,
+                    color = s.thermal?.let { thermalColor(it) }, ringSize = ring,
                 )
             }
             OvStatPair("RAM libre", "${formatGb(s.availRamBytes)} de ${formatGb(s.totalRamBytes)}",
@@ -343,7 +362,7 @@ private fun MonitorTool(controller: BoosterController, shizukuLabel: String) {
             OvStatPair("Shizuku", shizukuLabel, "Sesión", "Sin sesión activa")
             Text(
                 "El anillo térmico muestra el estado del sistema por niveles. Es informativo: la app no enfría el teléfono.",
-                style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
             )
         }
     }
@@ -378,7 +397,7 @@ private fun FavoritesTool(controller: BoosterController, onLaunchGame: (String) 
         if (favorites.isEmpty()) {
             Text(
                 "Pulsa el botón + de arriba para agregar tus juegos.",
-                style = MaterialTheme.typography.bodyMedium, color = NexusTextSecondary,
+                style = MaterialTheme.typography.bodyMedium, color = LocalOvPalette.current.description,
             )
         } else {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -412,14 +431,14 @@ private fun FavoriteItem(
             modifier = Modifier.clickable(enabled = !editing, onClick = onLaunch),
         )
         Text(
-            game.label, style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+            game.label, style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
             maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
         )
         if (editing) {
             Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                OvRoundButton("Mover a la izquierda", onLeft, size = 24.dp) { Text("◀", color = Color.White, style = MaterialTheme.typography.labelSmall) }
-                OvRoundButton("Quitar de favoritos", onRemove, size = 24.dp, filled = true) { Text("✕", color = Color.White, style = MaterialTheme.typography.labelSmall) }
-                OvRoundButton("Mover a la derecha", onRight, size = 24.dp) { Text("▶", color = Color.White, style = MaterialTheme.typography.labelSmall) }
+                OvRoundButton("Mover a la izquierda", onLeft, size = 24.dp) { Text("◀", style = MaterialTheme.typography.labelSmall) }
+                OvRoundButton("Quitar de favoritos", onRemove, size = 24.dp, filled = true) { Text("✕", style = MaterialTheme.typography.labelSmall) }
+                OvRoundButton("Mover a la derecha", onRight, size = 24.dp) { Text("▶", style = MaterialTheme.typography.labelSmall) }
             }
         }
     }
@@ -432,7 +451,7 @@ private fun ProfilesTool(controller: BoosterController) {
     OvCard(title = "Perfil gaming") {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             profiles.filter { it.id != "custom" }.forEach { p ->
-                FilterChip(
+                OvChip(
                     selected = p.id == activeId,
                     onClick = { controller.setActiveProfile(p.id) },
                     label = { Text(p.name, style = MaterialTheme.typography.labelLarge, maxLines = 1) },
@@ -441,7 +460,7 @@ private fun ProfilesTool(controller: BoosterController) {
         }
         Text(
             "Se guarda como perfil activo. Todavía no cambia ajustes del sistema por sí solo.",
-            style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+            style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
         )
     }
 }
@@ -485,7 +504,7 @@ private fun NotesTool(controller: BoosterController, open: Boolean, onOpenChange
             )
             Text(
                 "Al escribir, Android puede quitarle el foco al juego y algunos juegos se pausan.",
-                style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
             )
         }
     }
@@ -501,14 +520,14 @@ private fun DndTool(controller: BoosterController, onOpenSettings: (Intent) -> U
             if (!access.dnd) {
                 OvButton("CONCEDER", { onOpenSettings(controller.dndAccessIntent()) }, filled = false)
             } else {
-                Switch(
+                OvSwitch(
                     checked = restore.dndPrevious != null,
                     onCheckedChange = { if (it) controller.applyDnd() else controller.restoreDnd() },
                 )
             }
         }
         if (!access.dnd) {
-            Text("Android pide que concedas el acceso en Ajustes.", style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary)
+            Text("Android pide que concedas el acceso en Ajustes.", style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description)
         }
     }
 }
@@ -522,11 +541,11 @@ private fun RotationTool(controller: BoosterController, onOpenSettings: (Intent)
             if (!access.writeSettings) {
                 OvButton("CONCEDER", { onOpenSettings(controller.writeSettingsIntent()) }, filled = false)
             } else {
-                Switch(checked = access.autoRotate == true, onCheckedChange = { controller.setAutoRotate(it) })
+                OvSwitch(checked = access.autoRotate == true, onCheckedChange = { controller.setAutoRotate(it) })
             }
         }
         if (!access.writeSettings) {
-            Text("Requiere el permiso de modificar ajustes del sistema.", style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary)
+            Text("Requiere el permiso de modificar ajustes del sistema.", style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description)
         }
     }
 }
@@ -547,7 +566,7 @@ private fun BrightnessTool(controller: BoosterController, onOpenSettings: (Inten
         if (access.writeSettings) {
             OvSlider("Nivel", access.brightnessPercent ?: 50, 1..100, "%") { controller.applyBrightness(it) }
         } else {
-            Text("Requiere el permiso de modificar ajustes del sistema.", style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary)
+            Text("Requiere el permiso de modificar ajustes del sistema.", style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description)
         }
     }
 }
@@ -569,12 +588,12 @@ private fun CrosshairTool(controller: BoosterController, onOpen: () -> Unit) {
     OvCard {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Mira", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            Switch(checked = settings.enabled, onCheckedChange = { controller.setCrosshairEnabled(it) })
+            OvSwitch(checked = settings.enabled, onCheckedChange = { controller.setCrosshairEnabled(it) })
         }
         OvButton("AJUSTAR MIRA", onOpen, Modifier.fillMaxWidth(), filled = false)
         Text(
             "Retícula cosmética y fija. Algunos juegos competitivos prohíben las superposiciones.",
-            style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+            style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
         )
     }
 }
@@ -585,7 +604,7 @@ private fun CaptureNote() {
         Text(
             "No disponible todavía. Android solo permite capturar otras apps con MediaProjection y tu consentimiento. " +
                 "Mientras tanto usa la captura del sistema.",
-            style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+            style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
         )
     }
 }

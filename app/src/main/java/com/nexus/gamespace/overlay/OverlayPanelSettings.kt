@@ -4,6 +4,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
@@ -27,6 +28,7 @@ fun PanelSettingsContent(
     prefs: OverlayPrefs,
     onSave: (OverlayPrefs) -> Unit,
     onSide: (OverlaySide) -> Unit,
+    onOpenColors: () -> Unit,
 ) {
     val spacing = LocalOverlaySpacing.current
     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(spacing)) {
@@ -34,7 +36,7 @@ fun PanelSettingsContent(
         OvCard(title = "Tamaño del panel") {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 SizePreset.entries.forEach { p ->
-                    FilterChip(
+                    OvChip(
                         selected = prefs.preset() == p,
                         onClick = { if (p != SizePreset.CUSTOM) onSave(prefs.withPreset(p)) },
                         label = { Text(p.label, style = MaterialTheme.typography.labelLarge, maxLines = 1) },
@@ -51,25 +53,30 @@ fun PanelSettingsContent(
             OvSlider("Opacidad", prefs.alphaPercent, OverlayPrefs.ALPHA_MIN..OverlayPrefs.ALPHA_MAX, "%") { onSave(prefs.copy(alphaPercent = it)) }
             Text(
                 "El ajuste se aplica al soltar el control y este mismo panel te sirve de vista previa.",
-                style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
             )
+        }
+
+        OvCard(title = "Colores") {
+            OvButton("COLOR STUDIO", onOpenColors, Modifier.fillMaxWidth())
+            OvHint("Colores de texto, fondos, bordes, iconos, anillos y más, con códigos HEX y avisos de contraste.")
         }
 
         OvCard(title = "Posición") {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(prefs.side == OverlaySide.LEFT, { onSide(OverlaySide.LEFT) }, { Text("Izquierda", style = MaterialTheme.typography.labelLarge) })
-                FilterChip(prefs.side == OverlaySide.RIGHT, { onSide(OverlaySide.RIGHT) }, { Text("Derecha", style = MaterialTheme.typography.labelLarge) })
+                OvChip(prefs.side == OverlaySide.LEFT, { onSide(OverlaySide.LEFT) }, { Text("Izquierda", style = MaterialTheme.typography.labelLarge) })
+                OvChip(prefs.side == OverlaySide.RIGHT, { onSide(OverlaySide.RIGHT) }, { Text("Derecha", style = MaterialTheme.typography.labelLarge) })
             }
             Text(
                 "También puedes arrastrar la pestaña lateral: se queda donde la sueltes y cambia de lado si la llevas al otro extremo.",
-                style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
             )
         }
 
         OvCard(title = "Animaciones") {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 AnimationMode.entries.forEach { m ->
-                    FilterChip(
+                    OvChip(
                         selected = prefs.animation == m,
                         onClick = { onSave(prefs.copy(animation = m)) },
                         label = { Text(m.label, style = MaterialTheme.typography.labelLarge, maxLines = 1) },
@@ -79,7 +86,7 @@ fun PanelSettingsContent(
             Text(
                 "Los anillos crecen desde cero hasta el valor real al abrir el panel y se animan cuando el dato cambia. " +
                     "Desactivadas o Reducidas ahorran batería. No hay animaciones infinitas con el panel cerrado.",
-                style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
             )
         }
     }

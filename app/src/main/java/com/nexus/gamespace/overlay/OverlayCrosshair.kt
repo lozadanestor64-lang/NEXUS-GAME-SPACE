@@ -61,20 +61,20 @@ fun CrosshairContent(controller: BoosterController) {
         OvCard {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Mostrar mira sobre el juego", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Switch(checked = settings.enabled, onCheckedChange = { controller.setCrosshairEnabled(it) })
+                OvSwitch(checked = settings.enabled, onCheckedChange = { controller.setCrosshairEnabled(it) })
             }
             Text(
                 "La mira es solo un dibujo fijo que tú colocas. No detecta enemigos, no lee la pantalla ni dispara. " +
                     "Algunos juegos competitivos prohíben las superposiciones externas: úsala bajo tu responsabilidad.",
-                style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
             )
         }
 
         OvCard(title = "Ajustar la mira de") {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(target == null, { target = null }, { Text("Global", style = MaterialTheme.typography.labelLarge) })
+                OvChip(target == null, { target = null }, { Text("Global", style = MaterialTheme.typography.labelLarge) })
                 favorites.forEach { g ->
-                    FilterChip(
+                    OvChip(
                         selected = target == g.packageName,
                         onClick = { target = g.packageName },
                         label = { Text(g.label, style = MaterialTheme.typography.labelLarge, maxLines = 1) },
@@ -85,23 +85,23 @@ fun CrosshairContent(controller: BoosterController) {
             if (game == null) {
                 Text(
                     "La mira global se usa en todos los juegos que no tengan una propia. Los juegos que ves aquí son tus favoritos.",
-                    style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                    style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
                 )
             } else {
                 Text(
                     if (hasOverride) "$targetLabel tiene su propia mira." else "$targetLabel usa la mira global; al cambiar algo se guardará una propia.",
-                    style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                    style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
                 )
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("No mostrar la mira en este juego", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                    Switch(checked = game in settings.excluded, onCheckedChange = { controller.setCrosshairExcluded(game, it) })
+                    OvSwitch(checked = game in settings.excluded, onCheckedChange = { controller.setCrosshairExcluded(game, it) })
                 }
                 if (hasOverride) {
                     OvButton("USAR LA MIRA GLOBAL", { controller.clearCrosshairOverride(game) }, Modifier.fillMaxWidth(), filled = false)
                 }
                 Text(
                     "Sin el acceso de uso no se puede saber qué juego está en primer plano: la mira de un juego se aplica cuando lo abres desde NEXUS GAME SPACE.",
-                    style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                    style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
                 )
             }
         }
@@ -112,8 +112,8 @@ fun CrosshairContent(controller: BoosterController) {
                     .fillMaxWidth()
                     .size(120.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF1B1D22))
-                    .border(1.dp, NexusBorder, RoundedCornerShape(10.dp)),
+                    .background(LocalOvPalette.current.menuBg)
+                    .border(1.dp, LocalOvPalette.current.border, RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 AndroidView(
@@ -126,7 +126,7 @@ fun CrosshairContent(controller: BoosterController) {
         OvCard(title = "Diseño") {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 CrosshairStyle.entries.forEach { st ->
-                    FilterChip(
+                    OvChip(
                         selected = cfg.style == st,
                         onClick = { save(cfg.copy(style = st)) },
                         label = { Text(st.label, style = MaterialTheme.typography.labelLarge, maxLines = 1) },
@@ -134,9 +134,9 @@ fun CrosshairContent(controller: BoosterController) {
                 }
             }
             if (cfg.style == CrosshairStyle.CUSTOM) {
-                PartSwitch("Punto central", cfg.customDot) { save(cfg.copy(customDot = it)) }
-                PartSwitch("Cruz", cfg.customCross) { save(cfg.copy(customCross = it)) }
-                PartSwitch("Círculo", cfg.customCircle) { save(cfg.copy(customCircle = it)) }
+                PartOvSwitch("Punto central", cfg.customDot) { save(cfg.copy(customDot = it)) }
+                PartOvSwitch("Cruz", cfg.customCross) { save(cfg.copy(customCross = it)) }
+                PartOvSwitch("Círculo", cfg.customCircle) { save(cfg.copy(customCircle = it)) }
             }
         }
 
@@ -149,7 +149,7 @@ fun CrosshairContent(controller: BoosterController) {
                             .size(28.dp)
                             .clip(CircleShape)
                             .background(Color(c))
-                            .then(if (cfg.colorArgb == c) Modifier.border(3.dp, Color.White, CircleShape) else Modifier)
+                            .then(if (cfg.colorArgb == c) Modifier.border(3.dp, LocalOvPalette.current.title, CircleShape) else Modifier)
                             .clickable { save(cfg.copy(colorArgb = c)) },
                     )
                 }
@@ -160,7 +160,7 @@ fun CrosshairContent(controller: BoosterController) {
             OvSlider("Transparencia (opacidad)", cfg.alphaPercent, CrosshairConfig.ALPHA_RANGE, "%") { save(cfg.copy(alphaPercent = it)) }
             Text(
                 "En Android 12 o superior la ventana de la mira se limita al 80 % de opacidad para no bloquear tus toques en el juego.",
-                style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+                style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
             )
         }
 
@@ -170,9 +170,9 @@ fun CrosshairContent(controller: BoosterController) {
                 style = MaterialTheme.typography.bodyMedium,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(step == 1, { step = 1 }, { Text("Paso 1", style = MaterialTheme.typography.labelLarge) })
-                FilterChip(step == 5, { step = 5 }, { Text("Paso 5", style = MaterialTheme.typography.labelLarge) })
-                FilterChip(step == 20, { step = 20 }, { Text("Paso 20", style = MaterialTheme.typography.labelLarge) })
+                OvChip(step == 1, { step = 1 }, { Text("Paso 1", style = MaterialTheme.typography.labelLarge) })
+                OvChip(step == 5, { step = 5 }, { Text("Paso 5", style = MaterialTheme.typography.labelLarge) })
+                OvChip(step == 20, { step = 20 }, { Text("Paso 20", style = MaterialTheme.typography.labelLarge) })
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 OvButton("◀", { save(cfg.copy(offsetX = cfg.offsetX - step)) }, Modifier.weight(1f), filled = false)
@@ -185,15 +185,15 @@ fun CrosshairContent(controller: BoosterController) {
 
         Text(
             "Cada ajuste se guarda al instante en tu teléfono.",
-            style = MaterialTheme.typography.labelSmall, color = NexusRed,
+            style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.accentText,
         )
     }
 }
 
 @Composable
-private fun PartSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun PartOvSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-        Switch(checked = checked, onCheckedChange = onChange)
+        OvSwitch(checked = checked, onCheckedChange = onChange)
     }
 }

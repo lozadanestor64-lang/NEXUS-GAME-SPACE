@@ -60,7 +60,7 @@ fun AddGamesContent(controller: BoosterController, onDone: () -> Unit) {
         )
         Text(
             if (apps.isEmpty()) "Buscando aplicaciones…" else "${selected.size} seleccionadas · ${visible.size} aplicaciones",
-            style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary,
+            style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
         )
         LazyColumn(Modifier.weight(1f, fill = false)) {
             items(visible, key = { it.packageName }) { app ->
@@ -79,12 +79,12 @@ fun AddGamesContent(controller: BoosterController, onDone: () -> Unit) {
                     Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
                         Text(app.label, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (already) {
-                            Text("Ya está en favoritos", style = MaterialTheme.typography.labelSmall, color = NexusTextSecondary)
+                            Text("Ya está en favoritos", style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description)
                         } else if (app.suggestedGame) {
-                            Text("Sugerido como juego", style = MaterialTheme.typography.labelSmall, color = NexusRed)
+                            Text("Sugerido como juego", style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.accentText)
                         }
                     }
-                    Checkbox(
+                    OvCheckbox(
                         checked = checked,
                         enabled = !already,
                         onCheckedChange = { isOn ->

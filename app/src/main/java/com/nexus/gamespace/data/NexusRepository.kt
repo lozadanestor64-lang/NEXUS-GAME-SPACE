@@ -9,6 +9,7 @@ import com.nexus.gamespace.domain.BoosterRestoreState
 import com.nexus.gamespace.domain.CrosshairSettings
 import com.nexus.gamespace.domain.AnimationMode
 import com.nexus.gamespace.domain.GameEntry
+import com.nexus.gamespace.domain.OverlayColors
 import com.nexus.gamespace.domain.GameProfile
 import com.nexus.gamespace.domain.OverlayPrefs
 import com.nexus.gamespace.domain.OverlaySide
@@ -64,6 +65,7 @@ class NexusRepository(context: Context) {
         )
     }
     val crosshair: Flow<CrosshairSettings> = store.data.map { JsonCodec.decodeCrosshair(it[CROSSHAIR]) }
+    val overlayColors: Flow<OverlayColors> = store.data.map { JsonCodec.decodeColors(it[COLORS]) }
     val notes: Flow<String> = store.data.map { it[NOTES] ?: "" }
 
     /** Guarda el valor original solo si aún no hay uno, para no sobrescribirlo con un valor ya modificado. */
@@ -148,6 +150,10 @@ class NexusRepository(context: Context) {
         }
     }
 
+    suspend fun saveOverlayColors(colors: OverlayColors) {
+        store.edit { prefs -> prefs[COLORS] = JsonCodec.encodeColors(colors) }
+    }
+
     suspend fun saveNotes(text: String) {
         store.edit { prefs -> prefs[NOTES] = text }
     }
@@ -158,6 +164,7 @@ class NexusRepository(context: Context) {
         val BRIGHT_MODE_PREV = intPreferencesKey("booster_brightness_mode_prev")
         val NOTES = stringPreferencesKey("booster_notes")
         val CROSSHAIR = stringPreferencesKey("crosshair_json")
+        val COLORS = stringPreferencesKey("overlay_colors_json")
         val ROTATION_PREV = intPreferencesKey("booster_rotation_prev")
         val OV_SIDE = stringPreferencesKey("overlay_side")
         val OV_ALPHA = intPreferencesKey("overlay_alpha")

@@ -44,7 +44,9 @@ import com.nexus.gamespace.booster.BoosterController
 import com.nexus.gamespace.data.NexusRepository
 import com.nexus.gamespace.domain.AnimationMode
 import com.nexus.gamespace.domain.CrosshairSettings
+import com.nexus.gamespace.domain.OverlayColors
 import com.nexus.gamespace.domain.OverlayGestures
+import com.nexus.gamespace.domain.ColorRole
 import com.nexus.gamespace.domain.OverlayPrefs
 import com.nexus.gamespace.domain.OverlaySide
 import com.nexus.gamespace.domain.TabGesture
@@ -119,6 +121,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
     // Estado que lee la interfaz Compose del panel.
     private var prefs by mutableStateOf(OverlayPrefs())
+    private var colors by mutableStateOf(OverlayColors())
     private var panelVisible by mutableStateOf(false)
     private var landscape by mutableStateOf(false)
     private var maxHeightDp by mutableStateOf(480f)
@@ -211,6 +214,13 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         }
         scope.launch { shizuku.state.collect { shizukuLabel = it.status.label } }
         scope.launch { repo.crosshair.collect { applyCrosshair(it) } }
+        scope.launch {
+            repo.overlayColors.collect { newColors ->
+                val tabColorChanged = newColors.raw(ColorRole.ACTIVE_BUTTON) != colors.raw(ColorRole.ACTIVE_BUTTON)
+                colors = newColors
+                if (tabColorChanged && mode == Mode.TAB) showTab()
+            }
+        }
     }
 
     // ------------------------------------------------------------------ mira
@@ -328,7 +338,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         }
         val alpha = (prefs.alphaPercent / 100f * 255).toInt().coerceIn(100, 255)
         val bg = GradientDrawable().apply {
-            setColor((alpha shl 24) or 0xE5202E)
+            setColor((alpha shl 24) or (colors.raw(ColorRole.ACTIVE_BUTTON) and 0xFFFFFFL).toInt())
             cornerRadii = radii
             setStroke((1f * d).toInt().coerceAtLeast(1), 0x66FFFFFF)
         }
@@ -452,6 +462,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                 OverlayPanel(
                     controller = controller,
                     prefs = prefs,
+                    colors = colors,
                     shizukuLabel = shizukuLabel,
                     landscape = landscape,
                     maxHeightDp = maxHeightDp,
