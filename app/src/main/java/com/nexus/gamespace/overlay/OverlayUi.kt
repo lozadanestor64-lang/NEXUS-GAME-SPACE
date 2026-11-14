@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -41,9 +42,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
@@ -58,12 +61,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nexus.gamespace.domain.AnimationMode
+import com.nexus.gamespace.domain.PanelStyle
 import kotlin.math.roundToInt
 
 /** Valores de diseño que el panel reparte a sus componentes. */
 val LocalOverlaySpacing = compositionLocalOf { 8.dp }
 val LocalIconScale = compositionLocalOf { 1f }
 val LocalAnimation = compositionLocalOf { AnimationMode.NORMAL }
+val LocalPanelStyle = compositionLocalOf { PanelStyle.REDMAGIC }
 
 /** Tipografía compacta del panel flotante: textos legibles y sin tarjetas enormes. */
 val OverlayTypography = Typography(
@@ -100,6 +105,23 @@ fun OvHint(text: String, modifier: Modifier = Modifier) {
 
 // ----------------------------------------------------------------------------- contenedores
 
+/**
+ * Recorta con la forma dada y dibuja fondo y borde en la fase de dibujo. Así, cuando el RGB cambia un color
+ * solo se redibuja el marco y no se recompone el contenido.
+ */
+fun Modifier.ovFrame(
+    shape: Shape,
+    background: () -> Color,
+    border: () -> Color,
+    borderWidth: Dp = 1.dp,
+): Modifier = this
+    .clip(shape)
+    .drawBehind {
+        drawRect(background())
+        val outline = shape.createOutline(size, layoutDirection, this)
+        drawOutline(outline, border(), style = Stroke(width = borderWidth.toPx() * 2f))
+    }
+
 @Composable
 fun OvCard(
     modifier: Modifier = Modifier,
@@ -108,15 +130,24 @@ fun OvCard(
 ) {
     val spacing = LocalOverlaySpacing.current
     val p = LocalOvPalette.current
-    val shape = RoundedCornerShape(12.dp)
+    val style = LocalPanelStyle.current
+    val redmagic = style == PanelStyle.REDMAGIC
+    // REDMAGIC: esquinas cortadas y una marca luminosa; XIAOMI: esquinas redondeadas y más compacta.
+    val shape: Shape = if (redmagic) CutCornerShape(topStart = 10.dp, bottomEnd = 10.dp) else RoundedCornerShape(16.dp)
+    val inner = if (redmagic) spacing else spacing * 0.85f
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(p.cardBg)
-            .border(1.dp, p.border, shape)
-            .padding(spacing),
-        verticalArrangement = Arrangement.spacedBy(spacing * 0.75f),
+            .ovFrame(shape, background = { p.cardBg }, border = { p.border })
+            .then(
+                if (redmagic) {
+                    Modifier.drawBehind {
+                        drawRect(p.glow.copy(alpha = 0.9f), size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height * 0.5f))
+                    }
+                } else Modifier
+            )
+            .padding(inner),
+        verticalArrangement = Arrangement.spacedBy(inner * 0.75f),
     ) {
         if (title != null) {
             Text(title, style = MaterialTheme.typography.titleMedium, color = p.title)

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.nexus.gamespace.domain.AnimationMode
 import com.nexus.gamespace.domain.OverlayPrefs
+import com.nexus.gamespace.domain.PanelStyle
 import com.nexus.gamespace.domain.OverlaySide
 import com.nexus.gamespace.domain.SizePreset
 import com.nexus.gamespace.ui.theme.NexusTextSecondary
@@ -29,6 +30,7 @@ fun PanelSettingsContent(
     onSave: (OverlayPrefs) -> Unit,
     onSide: (OverlaySide) -> Unit,
     onOpenColors: () -> Unit,
+    onOpenRgb: () -> Unit,
 ) {
     val spacing = LocalOverlaySpacing.current
     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(spacing)) {
@@ -62,6 +64,11 @@ fun PanelSettingsContent(
             OvHint("Colores de texto, fondos, bordes, iconos, anillos y más, con códigos HEX y avisos de contraste.")
         }
 
+        OvCard(title = "RGB") {
+            OvButton("NEXUS RGB MODE", onOpenRgb, Modifier.fillMaxWidth())
+            OvHint("Rainbow, Chroma, Spectrum, Gradient, Breathing y Color Wave, global o selectivo, con velocidad, dirección e intensidad.")
+        }
+
         OvCard(title = "Posición") {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 OvChip(prefs.side == OverlaySide.LEFT, { onSide(OverlaySide.LEFT) }, { Text("Izquierda", style = MaterialTheme.typography.labelLarge) })
@@ -88,6 +95,15 @@ fun PanelSettingsContent(
                     "Desactivadas o Reducidas ahorran batería. No hay animaciones infinitas con el panel cerrado.",
                 style = MaterialTheme.typography.labelSmall, color = LocalOvPalette.current.description,
             )
+        }
+
+        // Última sección: estilo visual (solo dos opciones, con las mismas funciones).
+        OvCard(title = "ESTILO VISUAL DEL GAME SPACE") {
+            PanelStyle.entries.forEach { st ->
+                OvButton(st.label, { onSave(prefs.copy(style = st)) }, Modifier.fillMaxWidth(), filled = prefs.style == st)
+                OvHint(st.description)
+            }
+            OvHint("Los dos estilos tienen exactamente las mismas funciones y datos; solo cambian distribución, formas, tarjetas y animaciones. Puedes cambiar cuando quieras.")
         }
     }
 }

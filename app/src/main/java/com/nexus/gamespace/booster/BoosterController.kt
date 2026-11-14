@@ -18,6 +18,7 @@ import com.nexus.gamespace.domain.OverlayColors
 import com.nexus.gamespace.domain.FavoritesLogic
 import com.nexus.gamespace.domain.InstalledApp
 import com.nexus.gamespace.domain.OverlayPrefs
+import com.nexus.gamespace.domain.RgbSettings
 import com.nexus.gamespace.domain.GameEntry
 import com.nexus.gamespace.domain.GameProfile
 import com.nexus.gamespace.domain.Stopwatch
@@ -77,6 +78,8 @@ class BoosterController(context: Context, private val scope: CoroutineScope) {
         repo.games.map { list -> FavoritesLogic.ordered(list) }
             .stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val installedApps = MutableStateFlow<List<InstalledApp>>(emptyList())
+    val rgb: StateFlow<RgbSettings> =
+        repo.overlayRgb.stateIn(scope, SharingStarted.WhileSubscribed(5_000), RgbSettings())
     val colors: StateFlow<OverlayColors> =
         repo.overlayColors.stateIn(scope, SharingStarted.WhileSubscribed(5_000), OverlayColors())
     val crosshair: StateFlow<CrosshairSettings> =
@@ -144,6 +147,11 @@ class BoosterController(context: Context, private val scope: CoroutineScope) {
 
     fun setSide(side: com.nexus.gamespace.domain.OverlaySide) {
         scope.launch { repo.setOverlaySide(side) }
+    }
+
+    // ---- RGB ----
+    fun saveRgb(rgb: RgbSettings) {
+        scope.launch { repo.saveOverlayRgb(rgb) }
     }
 
     // ---- Colores ----

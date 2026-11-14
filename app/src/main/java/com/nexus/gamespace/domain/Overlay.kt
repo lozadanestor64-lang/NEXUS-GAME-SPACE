@@ -22,6 +22,18 @@ enum class OverlayTool(val id: String, val label: String) {
     LIBRARY("library", "Biblioteca de juegos"),
 }
 
+/** Estilo visual del panel. Los dos tienen exactamente las mismas funciones; cambian distribución, formas y animaciones. */
+enum class PanelStyle(val label: String, val description: String) {
+    REDMAGIC(
+        "REDMAGIC PANEL",
+        "Diseño amplio y simétrico: indicadores circulares grandes al centro, controles a ambos lados y bordes angulares.",
+    ),
+    XIAOMI(
+        "XIAOMI PANEL",
+        "Diseño compacto: menú lateral con secciones, accesos rápidos, tarjetas redondeadas y transiciones deslizantes.",
+    ),
+}
+
 enum class AnimationMode(val label: String, val durationMs: Int) {
     OFF("Desactivadas", 0),
     REDUCED("Reducidas", 250),
@@ -51,6 +63,7 @@ data class OverlayPrefs(
     val spacingDp: Int = 8,
     val marginDp: Int = 8,
     val animation: AnimationMode = AnimationMode.NORMAL,
+    val style: PanelStyle = PanelStyle.REDMAGIC,
 ) {
     fun isVisible(tool: OverlayTool): Boolean = tool.id !in hiddenTools
 

@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.4.0 (en desarrollo) — NEXUS RGB MODE y estilos REDMAGIC / XIAOMI
+- RGB MODE: global o selectivo (bordes, iconos, botones, anillos, fondo, iluminación), 6 efectos (Rainbow, Chroma, Spectrum, Gradient, Breathing, Color Wave), velocidad (lenta, normal, rápida, personalizada), dirección e intensidad, con vista previa en directo.
+- El RGB nunca afecta al texto ni a las alertas térmicas; los fondos solo reciben un tinte oscuro. Ahorro automático con batería baja y aviso para reducir efectos.
+- ESTILO VISUAL: REDMAGIC PANEL y XIAOMI PANEL con las mismas funciones; cambian distribución, formas, tarjetas y animaciones. Se guarda con DataStore.
+- Marco de tarjetas y panel dibujado en la fase de dibujo para que el RGB no recomponga el contenido.
+- Pruebas unitarias nuevas del motor RGB y de los estilos.
+- Pendiente: Macro Guard y detección de Free Fire, Voice Studio, Sound Board y grabación de voz.
+
 ## 0.4.0 (en desarrollo) — COLOR STUDIO y corrección del texto negro
 - **Corregido:** texto negro sobre fondo negro en el panel flotante. Causa: `Text` sin color usaba el negro por defecto. Ahora todo el panel usa una paleta central.
 - Color Studio con 24 colores (texto, fondos y otros elementos), selector HEX/HSV, 6 paletas, vista previa en directo y restaurar.

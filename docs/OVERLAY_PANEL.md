@@ -10,8 +10,8 @@ Se activa y configura en **Más → Configuración general**.
 | 1 | Rediseño compacto, botón +, AGREGAR JUEGOS, favoritos circulares y reordenables, animaciones, CONFIGURACIÓN DEL PANEL (tamaño, posición, animaciones) | **Escrito en esta entrega; sin compilar ni probar** |
 | 2a | MIRA (retícula cosmética) | **Escrita en esta entrega; sin compilar ni probar** |
 | 2b | **COLOR STUDIO** (corrige el texto negro sobre negro) | **Escrito en esta entrega; sin compilar ni probar** |
-| 2c | RGB MODE y Chroma | No empezado |
-| 3 | Estilos REDMAGIC PANEL y XIAOMI PANEL | No empezado |
+| 2c | **NEXUS RGB MODE** y Chroma | **Escrito en esta entrega; sin compilar ni probar** |
+| 3 | **Estilos REDMAGIC PANEL y XIAOMI PANEL** | **Escrito en esta entrega; sin compilar ni probar** |
 | 4 | Grabación de pantalla y captura (MediaProjection), tarjetas reducibles individualmente | No empezado |
 
 No se ha probado en un Motorola Moto G15 ni con Android 15. La superposición no se da por terminada hasta verificarla allí.
@@ -24,6 +24,24 @@ No se ha probado en un Motorola Moto G15 ni con Android 15. La superposición no
 - **Anillos animados:** batería, RAM libre y estado térmico. Al abrir crecen desde cero hasta el valor real; cuando el dato cambia se animan desde el valor anterior. El anillo térmico muestra el nivel del sistema por pasos (Normal, Atención, Elevado, Crítico), no una temperatura de CPU. No hay animaciones infinitas.
 - **Animaciones:** Desactivadas, Reducidas, Lentas, Normales o Rápidas.
 - **Engranaje (arriba):** abre CONFIGURACIÓN DEL PANEL con tamaño (Compacto, Normal, Grande o Personalizado con control de tamaño global, ancho, alto máximo, texto, iconos, espaciado, márgenes y opacidad), posición (lado) y animaciones. El propio panel hace de vista previa en tiempo real. Todo se guarda con DataStore.
+
+## Grupo 2c: NEXUS RGB MODE
+Engranaje → NEXUS RGB MODE.
+- **Interruptor general.** Apagado, no hay animación ni coste de batería.
+- **RGB Global** (todo el panel) o **RGB Selectivo**: bordes, iconos, botones, anillos, fondo e iluminación.
+- **Efectos:** Rainbow (todo a la vez), Chroma (cada elemento desfasado, forma una onda), Spectrum (colores del espectro con transiciones), Gradient y Color Wave (oscilan alrededor del color elegido) y Breathing (el color elegido respira).
+- **Velocidad:** Lenta (10 s por ciclo), Normal (5 s), Rápida (2,5 s) o Personalizada (1 a 20 s). **Dirección** adelante o inversa. **Intensidad** de 10 a 100 %.
+- **Vista previa en directo** con una franja que muestra el efecto en el panel.
+- **Lo que el RGB nunca toca:** el texto y las alertas térmicas. Los fondos solo reciben un tinte oscuro (brillo máximo 14 % a 20 %) para no perjudicar la lectura. El texto de los botones cambia a blanco o negro según el color que tengan en cada instante.
+- **Batería:** con la batería al 20 % o menos y sin cargar, el RGB se queda quieto (se puede desactivar este ahorro) y aparece el aviso para reducir efectos. Con las animaciones Desactivadas o Reducidas el color también se queda fijo.
+- **Coste:** el color se actualiza unas 14 veces por segundo, solo mientras el panel está abierto y el RGB activado. Los fondos y bordes se redibujan sin recomponer el contenido para reducir el trabajo.
+- La pestaña lateral cerrada no lleva efectos RGB (no hay animaciones con el panel cerrado).
+
+## Grupo 3: estilos REDMAGIC PANEL y XIAOMI PANEL
+Engranaje → última sección **ESTILO VISUAL DEL GAME SPACE**. Se puede cambiar en cualquier momento y se guarda con DataStore. **Los dos estilos tienen exactamente las mismas herramientas y datos.**
+- **REDMAGIC PANEL:** tarjetas y panel de esquinas cortadas con una marca luminosa, línea luminosa bajo el encabezado, anillos grandes, aparición con zoom. En horizontal: herramientas | monitor central | controles. En vertical: monitor arriba y controles repartidos simétricamente a izquierda y derecha.
+- **XIAOMI PANEL:** tarjetas redondeadas y más compactas, **menú lateral** con cuatro secciones (Monitor, Juegos, Controles y Útiles), anillos más pequeños y transiciones deslizantes entre secciones.
+- Diseños originales: no se usan imágenes, iconos ni recursos de ninguna marca.
 
 ## Grupo 2b: COLOR STUDIO y corrección del texto negro
 **Causa del error:** en el panel flotante no hay un contenedor que fije el color del contenido, así que todo `Text` sin color explícito usaba el negro por defecto de Compose y se perdía sobre el fondo oscuro.
@@ -95,7 +113,7 @@ No se muestran: ventilador, frecuencias desbloqueadas, FPS ni controles de otros
 - Captura y grabación: Android solo permite capturar otras apps con MediaProjection y consentimiento; fase posterior.
 
 ## Archivos nuevos
-`overlay/OverlayService.kt`, `overlay/OverlayPanel.kt`, `overlay/OverlayUi.kt`, `overlay/OverlayAddGames.kt`, `overlay/OverlayPanelSettings.kt`, `overlay/OverlayCrosshair.kt`, `overlay/OverlayPalette.kt`, `overlay/OverlayColorStudio.kt`, `domain/OverlayColors.kt`, `overlay/CrosshairView.kt`, `domain/Crosshair.kt`, `booster/BoosterController.kt`, `domain/Overlay.kt`, `domain/Stopwatch.kt`, `core/BoosterActions.kt`, `core/NetworkInfoProvider.kt`, `features/settings/SettingsScreen.kt`, `features/settings/SettingsViewModel.kt`, `res/drawable/ic_stat_nexus.xml`, `OverlayGesturesTest.kt`, `BoosterLogicTest.kt`, `FavoritesAndPrefsTest.kt`, `CrosshairTest.kt`, `ColorStudioTest.kt`.
+`overlay/OverlayService.kt`, `overlay/OverlayPanel.kt`, `overlay/OverlayUi.kt`, `overlay/OverlayAddGames.kt`, `overlay/OverlayPanelSettings.kt`, `overlay/OverlayCrosshair.kt`, `overlay/OverlayPalette.kt`, `overlay/OverlayRgbStudio.kt`, `domain/Rgb.kt`, `overlay/OverlayColorStudio.kt`, `domain/OverlayColors.kt`, `overlay/CrosshairView.kt`, `domain/Crosshair.kt`, `booster/BoosterController.kt`, `domain/Overlay.kt`, `domain/Stopwatch.kt`, `core/BoosterActions.kt`, `core/NetworkInfoProvider.kt`, `features/settings/SettingsScreen.kt`, `features/settings/SettingsViewModel.kt`, `res/drawable/ic_stat_nexus.xml`, `OverlayGesturesTest.kt`, `BoosterLogicTest.kt`, `FavoritesAndPrefsTest.kt`, `CrosshairTest.kt`, `ColorStudioTest.kt`, `RgbAndStyleTest.kt`.
 
 ## Archivos modificados
 `data/NexusRepository.kt`, `data/JsonCodec.kt`, `domain/GameEntry.kt`, `domain/Overlay.kt`, `ui/components/AppIcon.kt`, `ui/theme/Theme.kt`, `MainActivity.kt` (ruta pedida desde el panel), `ui/navigation/NexusApp.kt` y `Screen.kt` (Configuración ahora es real; **Optimizar vuelve a ser la pantalla preparada original**), `features/dashboard/DashboardScreen.kt` (estado del panel), `AndroidManifest.xml`, `features/about/AboutScreen.kt`.

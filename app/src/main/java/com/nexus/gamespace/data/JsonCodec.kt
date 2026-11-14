@@ -9,6 +9,10 @@ import com.nexus.gamespace.domain.DefaultProfiles
 import com.nexus.gamespace.domain.GameEntry
 import com.nexus.gamespace.domain.GameProfile
 import com.nexus.gamespace.domain.OverlayColors
+import com.nexus.gamespace.domain.RgbEffect
+import com.nexus.gamespace.domain.RgbSettings
+import com.nexus.gamespace.domain.RgbSpeed
+import com.nexus.gamespace.domain.RgbTarget
 import com.nexus.gamespace.domain.ProfileSettings
 import com.nexus.gamespace.domain.ProfileType
 import org.json.JSONArray
@@ -203,6 +207,47 @@ object JsonCodec {
             OverlayColors(values = values, autoContrast = o.optBoolean("auto", true))
         } catch (e: JSONException) {
             OverlayColors()
+        }
+    }
+
+    // ---- RGB ----
+
+    fun encodeRgb(r: RgbSettings): String = JSONObject().apply {
+        put("enabled", r.enabled)
+        put("global", r.global)
+        put("targets", JSONArray(r.targets.map { it.name }))
+        put("effect", r.effect.name)
+        put("speed", r.speed.name)
+        put("customMs", r.customPeriodMs)
+        put("reverse", r.reverse)
+        put("intensity", r.intensityPercent)
+        put("lowBattery", r.reduceOnLowBattery)
+    }.toString()
+
+    fun decodeRgb(raw: String?): RgbSettings {
+        if (raw.isNullOrBlank()) return RgbSettings()
+        return try {
+            val o = JSONObject(raw)
+            val d = RgbSettings()
+            val targets = mutableSetOf<RgbTarget>()
+            o.optJSONArray("targets")?.let { arr ->
+                for (i in 0 until arr.length()) {
+                    RgbTarget.entries.firstOrNull { it.name == arr.optString(i) }?.let { targets.add(it) }
+                }
+            }
+            RgbSettings(
+                enabled = o.optBoolean("enabled", d.enabled),
+                global = o.optBoolean("global", d.global),
+                targets = targets,
+                effect = RgbEffect.entries.firstOrNull { it.name == o.optString("effect") } ?: d.effect,
+                speed = RgbSpeed.entries.firstOrNull { it.name == o.optString("speed") } ?: d.speed,
+                customPeriodMs = o.optInt("customMs", d.customPeriodMs).coerceIn(RgbSettings.PERIOD_RANGE),
+                reverse = o.optBoolean("reverse", d.reverse),
+                intensityPercent = o.optInt("intensity", d.intensityPercent).coerceIn(RgbSettings.INTENSITY_RANGE),
+                reduceOnLowBattery = o.optBoolean("lowBattery", d.reduceOnLowBattery),
+            )
+        } catch (e: JSONException) {
+            RgbSettings()
         }
     }
 }

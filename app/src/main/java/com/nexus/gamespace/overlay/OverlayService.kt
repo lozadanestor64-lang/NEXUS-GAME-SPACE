@@ -45,6 +45,7 @@ import com.nexus.gamespace.data.NexusRepository
 import com.nexus.gamespace.domain.AnimationMode
 import com.nexus.gamespace.domain.CrosshairSettings
 import com.nexus.gamespace.domain.OverlayColors
+import com.nexus.gamespace.domain.RgbSettings
 import com.nexus.gamespace.domain.OverlayGestures
 import com.nexus.gamespace.domain.ColorRole
 import com.nexus.gamespace.domain.OverlayPrefs
@@ -122,6 +123,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     // Estado que lee la interfaz Compose del panel.
     private var prefs by mutableStateOf(OverlayPrefs())
     private var colors by mutableStateOf(OverlayColors())
+    private var rgb by mutableStateOf(RgbSettings())
     private var panelVisible by mutableStateOf(false)
     private var landscape by mutableStateOf(false)
     private var maxHeightDp by mutableStateOf(480f)
@@ -214,6 +216,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         }
         scope.launch { shizuku.state.collect { shizukuLabel = it.status.label } }
         scope.launch { repo.crosshair.collect { applyCrosshair(it) } }
+        scope.launch { repo.overlayRgb.collect { rgb = it } }
         scope.launch {
             repo.overlayColors.collect { newColors ->
                 val tabColorChanged = newColors.raw(ColorRole.ACTIVE_BUTTON) != colors.raw(ColorRole.ACTIVE_BUTTON)
@@ -337,8 +340,9 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             floatArrayOf(r, r, 0f, 0f, 0f, 0f, r, r)
         }
         val alpha = (prefs.alphaPercent / 100f * 255).toInt().coerceIn(100, 255)
+        val tabRgb = (this.colors.raw(ColorRole.ACTIVE_BUTTON) and 0xFFFFFFL).toInt()
         val bg = GradientDrawable().apply {
-                        setColor((alpha shl 24) or (this@OverlayService.colors.raw(ColorRole.ACTIVE_BUTTON) and 0xFFFFFFL).toInt())
+            setColor((alpha shl 24) or tabRgb)
             cornerRadii = radii
             setStroke((1f * d).toInt().coerceAtLeast(1), 0x66FFFFFF)
         }
@@ -463,6 +467,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                     controller = controller,
                     prefs = prefs,
                     colors = colors,
+                    rgb = rgb,
                     shizukuLabel = shizukuLabel,
                     landscape = landscape,
                     maxHeightDp = maxHeightDp,

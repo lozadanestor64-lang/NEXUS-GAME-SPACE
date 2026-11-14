@@ -2,12 +2,16 @@ package com.nexus.gamespace.overlay
 
 import android.content.Intent
 import android.os.SystemClock
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
@@ -21,14 +25,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -43,6 +53,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +61,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
@@ -63,6 +78,9 @@ import com.nexus.gamespace.domain.AnimationMode
 import com.nexus.gamespace.domain.GameEntry
 import com.nexus.gamespace.domain.OverlayColors
 import com.nexus.gamespace.domain.OverlayPrefs
+import com.nexus.gamespace.domain.PanelStyle
+import com.nexus.gamespace.domain.RgbEngine
+import com.nexus.gamespace.domain.RgbSettings
 import com.nexus.gamespace.domain.OverlaySide
 import com.nexus.gamespace.domain.OverlayTool
 import com.nexus.gamespace.domain.ThermalLevel
@@ -75,7 +93,7 @@ import com.nexus.gamespace.ui.theme.NexusTheme
 import com.nexus.gamespace.ui.theme.NexusWarn
 import kotlin.math.roundToInt
 
-private enum class PanelScreen { MAIN, ADD_GAMES, SETTINGS, CROSSHAIR, COLORS }
+private enum class PanelScreen { MAIN, ADD_GAMES, SETTINGS, CROSSHAIR, COLORS, RGB }
 
 /** Panel gaming que se dibuja sobre el juego. Todos sus controles llaman a acciones reales. */
 @Composable
@@ -83,6 +101,7 @@ fun OverlayPanel(
     controller: BoosterController,
     prefs: OverlayPrefs,
     colors: OverlayColors,
+    rgb: RgbSettings,
     shizukuLabel: String,
     landscape: Boolean,
     maxHeightDp: Float,
@@ -101,30 +120,62 @@ fun OverlayPanel(
         base.fontScale * prefs.textScalePercent / 100f,
     )
     val towardsLeft = prefs.side == OverlaySide.LEFT
+    val redmagic = prefs.style == PanelStyle.REDMAGIC
     val enter: EnterTransition = when (prefs.animation) {
         AnimationMode.OFF -> EnterTransition.None
         AnimationMode.REDUCED -> fadeIn(tween(150))
-        else -> slideInHorizontally(tween(280)) { w -> if (towardsLeft) -w else w } + fadeIn(tween(280))
+        else -> if (redmagic) {
+            // REDMAGIC: aparece con un zoom tecnológico.
+            scaleIn(tween(300), initialScale = 0.92f) + fadeIn(tween(300))
+        } else {
+            // XIAOMI: desliza desde el borde.
+            slideInHorizontally(tween(280)) { w -> if (towardsLeft) -w else w } + fadeIn(tween(280))
+        }
     }
     val exit: ExitTransition = when (prefs.animation) {
         AnimationMode.OFF -> ExitTransition.None
         AnimationMode.REDUCED -> fadeOut(tween(120))
-        else -> slideOutHorizontally(tween(240)) { w -> if (towardsLeft) -w else w } + fadeOut(tween(240))
+        else -> if (redmagic) {
+            scaleOut(tween(240), targetScale = 0.92f) + fadeOut(tween(240))
+        } else {
+            slideOutHorizontally(tween(240)) { w -> if (towardsLeft) -w else w } + fadeOut(tween(240))
+        }
     }
 
-    val palette = remember(colors) { OvPalette(colors) }
+    // Fase del efecto RGB. Solo corre mientras el panel está visible, el RGB está activado, las animaciones
+    // lo permiten y la batería no está baja; en cualquier otro caso se queda quieta (sin coste).
+    val live by controller.live.collectAsState()
+    val lowBattery = RgbEngine.isLowBattery(live?.snapshot?.batteryPercent, live?.snapshot?.batteryCharging)
+    val animating = visible && RgbEngine.shouldAnimate(rgb, prefs.animation, lowBattery)
+    val period = RgbEngine.periodMs(rgb)
+    val phaseState = remember { mutableFloatStateOf(0.25f) }
+    LaunchedEffect(animating, period) {
+        if (!animating) {
+            phaseState.floatValue = 0.25f
+        } else {
+            val startTime = SystemClock.elapsedRealtime()
+            while (true) {
+                phaseState.floatValue = ((SystemClock.elapsedRealtime() - startTime) % period) / period.toFloat()
+                kotlinx.coroutines.delay(70L)
+            }
+        }
+    }
+    val staticPalette = remember(colors) { OvPalette(colors) }
+    val palette = remember(colors, rgb) { OvPalette(colors, rgb) { phaseState.floatValue } }
+
     CompositionLocalProvider(
         LocalOvPalette provides palette,
-        LocalContentColor provides palette.text,
+        LocalContentColor provides staticPalette.text,
+        LocalPanelStyle provides prefs.style,
         LocalDensity provides scaled,
         LocalOverlaySpacing provides prefs.spacingDp.dp,
         LocalIconScale provides prefs.iconScalePercent / 100f,
         LocalAnimation provides prefs.animation,
     ) {
-        NexusTheme(typography = OverlayTypography, colorScheme = overlayColorScheme(palette)) {
+        NexusTheme(typography = OverlayTypography, colorScheme = overlayColorScheme(staticPalette)) {
             AnimatedVisibility(visible = visible, enter = enter, exit = exit) {
                 PanelSurface(
-                    controller, prefs, shizukuLabel, landscape, maxHeightDp,
+                    controller, prefs, colors, rgb, lowBattery, shizukuLabel, landscape, maxHeightDp,
                     onClose, onHide, onSwitchSide, onOpenLibrary, onLaunchGame, onOpenSettings, onNeedsKeyboard,
                 )
             }
@@ -136,6 +187,9 @@ fun OverlayPanel(
 private fun PanelSurface(
     controller: BoosterController,
     prefs: OverlayPrefs,
+    colors: OverlayColors,
+    rgb: RgbSettings,
+    lowBattery: Boolean,
     shizukuLabel: String,
     landscape: Boolean,
     maxHeightDp: Float,
@@ -151,7 +205,7 @@ private fun PanelSurface(
     val restore by controller.restoreState.collectAsState()
     val spacing = LocalOverlaySpacing.current
     val palette = LocalOvPalette.current
-    val shape = RoundedCornerShape(18.dp)
+    val shape: Shape = if (prefs.style == PanelStyle.REDMAGIC) CutCornerShape(topStart = 18.dp, bottomEnd = 18.dp) else RoundedCornerShape(22.dp)
 
     var screen by remember { mutableStateOf(PanelScreen.MAIN) }
     var notesOpen by remember { mutableStateOf(false) }
@@ -164,15 +218,17 @@ private fun PanelSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = maxHeightDp.dp)
-            .clip(shape)
-            .background(
-                when (screen) {
-                    PanelScreen.MAIN -> palette.panelBg
-                    PanelScreen.ADD_GAMES -> palette.dialogBg
-                    else -> palette.settingsBg
-                }.copy(alpha = prefs.alphaPercent / 100f)
+            .ovFrame(
+                shape = shape,
+                background = {
+                    when (screen) {
+                        PanelScreen.MAIN -> palette.panelBg
+                        PanelScreen.ADD_GAMES -> palette.dialogBg
+                        else -> palette.settingsBg
+                    }.copy(alpha = prefs.alphaPercent / 100f)
+                },
+                border = { palette.glow.copy(alpha = 0.65f) },
             )
-            .border(1.dp, palette.glow.copy(alpha = 0.65f), shape)
             .padding(spacing),
         verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
@@ -196,7 +252,7 @@ private fun PanelSurface(
             }
         } else {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OvRoundButton("Volver al panel", { screen = if (screen == PanelScreen.COLORS) PanelScreen.SETTINGS else PanelScreen.MAIN }) {
+                OvRoundButton("Volver al panel", { screen = if (screen == PanelScreen.COLORS || screen == PanelScreen.RGB) PanelScreen.SETTINGS else PanelScreen.MAIN }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                 }
                 Text(
@@ -204,12 +260,24 @@ private fun PanelSurface(
                         PanelScreen.ADD_GAMES -> "AGREGAR JUEGOS"
                         PanelScreen.CROSSHAIR -> "MIRA"
                         PanelScreen.COLORS -> "COLOR STUDIO"
+                        PanelScreen.RGB -> "NEXUS RGB MODE"
                         else -> "CONFIGURACIÓN DEL PANEL"
                     },
                     style = MaterialTheme.typography.titleLarge, color = palette.accentText,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+
+        if (prefs.style == PanelStyle.REDMAGIC) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .drawBehind {
+                        drawRect(brush = Brush.horizontalGradient(listOf(Color.Transparent, palette.glow, Color.Transparent)))
+                    },
+            )
         }
 
         // ---- Contenido: lo único que se desplaza ----
@@ -222,13 +290,20 @@ private fun PanelSurface(
                 )
                 PanelScreen.CROSSHAIR -> CrosshairContent(controller)
                 PanelScreen.ADD_GAMES -> AddGamesContent(controller) { screen = PanelScreen.MAIN }
+                PanelScreen.RGB -> RgbStudioContent(
+                    rgb = rgb,
+                    lowBattery = lowBattery,
+                    onChange = { controller.saveRgb(it) },
+                    onReduceAnimations = { controller.saveAppearance(prefs.copy(animation = AnimationMode.REDUCED)) },
+                )
                 PanelScreen.COLORS -> ColorStudioContent(
-                    colors = LocalOvPalette.current.colors,
+                    colors = colors,
                     onChange = { controller.saveColors(it) },
                 )
                 PanelScreen.SETTINGS -> PanelSettingsContent(
                     prefs = prefs,
                     onOpenColors = { screen = PanelScreen.COLORS },
+                    onOpenRgb = { screen = PanelScreen.RGB },
                     onSave = { controller.saveAppearance(it) },
                     onSide = { controller.setSide(it) },
                 )
@@ -259,11 +334,16 @@ private fun MainContent(
     onNotesOpenChange: (Boolean) -> Unit,
     onOpenCrosshair: () -> Unit,
 ) {
-    val spacing = LocalOverlaySpacing.current
     val t = Tools(controller, prefs, shizukuLabel, onOpenLibrary, onLaunchGame, onOpenSettings, notesOpen, onNotesOpenChange, onOpenCrosshair)
+    // Los dos estilos usan las mismas herramientas y datos; solo cambia la distribución.
+    if (prefs.style == PanelStyle.REDMAGIC) RedMagicLayout(t, landscape) else XiaomiLayout(t, landscape)
+}
 
+/** REDMAGIC: amplio y simétrico. Horizontal: herramientas | monitor central | controles. */
+@Composable
+private fun RedMagicLayout(t: Tools, landscape: Boolean) {
+    val spacing = LocalOverlaySpacing.current
     if (landscape) {
-        // Tres zonas: herramientas a la izquierda, monitor al centro y controles a la derecha.
         Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(spacing)) {
                 t.Favorites(); t.Profiles(); t.Timer(); t.Notes(); t.Library()
@@ -276,11 +356,89 @@ private fun MainContent(
             }
         }
     } else {
+        // Vertical: indicadores grandes arriba y controles repartidos a izquierda y derecha.
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(spacing)) {
-            t.Monitor(); t.Favorites(); t.Profiles()
-            t.Dnd(); t.Rotation(); t.Brightness(); t.Volume(); t.Wifi(); t.Crosshair()
-            t.Timer(); t.Notes(); t.Library(); t.Capture()
+            t.Monitor()
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(spacing)) { t.Dnd(); t.Brightness() }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(spacing)) { t.Rotation(); t.Volume() }
+            }
+            t.Favorites(); t.Profiles(); t.Wifi(); t.Crosshair(); t.Timer(); t.Notes(); t.Library(); t.Capture()
         }
+    }
+}
+
+private enum class XiaomiSection(val label: String, val icon: ImageVector) {
+    MONITOR("Monitor", Icons.Filled.Info),
+    GAMES("Juegos", Icons.Filled.PlayArrow),
+    CONTROLS("Controles", Icons.Filled.Settings),
+    TOOLS("Útiles", Icons.Filled.Build),
+}
+
+/** XIAOMI: compacto, con menú lateral de secciones y transiciones deslizantes. */
+@Composable
+private fun XiaomiLayout(t: Tools, landscape: Boolean) {
+    val spacing = LocalOverlaySpacing.current
+    val mode = LocalAnimation.current
+    var section by remember { mutableStateOf(XiaomiSection.MONITOR) }
+
+    Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+        Column(Modifier.width(60.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            XiaomiSection.entries.forEach { s -> XiaomiMenuItem(s, selected = s == section) { section = s } }
+        }
+        Box(Modifier.weight(1f)) {
+            AnimatedContent(
+                targetState = section,
+                transitionSpec = {
+                    if (mode == AnimationMode.OFF) {
+                        EnterTransition.None togetherWith ExitTransition.None
+                    } else {
+                        (slideInHorizontally(tween(240)) { it / 3 } + fadeIn(tween(240))) togetherWith
+                            (slideOutHorizontally(tween(200)) { -it / 3 } + fadeOut(tween(200)))
+                    }
+                },
+                label = "xiaomi-section",
+            ) { current ->
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(spacing)) {
+                    when (current) {
+                        XiaomiSection.MONITOR -> t.Monitor()
+                        XiaomiSection.GAMES -> { t.Favorites(); t.Profiles(); t.Library() }
+                        XiaomiSection.CONTROLS -> {
+                            if (landscape) {
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(spacing)) { t.Dnd(); t.Rotation(); t.Wifi() }
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(spacing)) { t.Brightness(); t.Volume(); t.Crosshair() }
+                                }
+                            } else {
+                                t.Dnd(); t.Rotation(); t.Brightness(); t.Volume(); t.Wifi(); t.Crosshair()
+                            }
+                        }
+                        XiaomiSection.TOOLS -> { t.Timer(); t.Notes(); t.Capture() }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun XiaomiMenuItem(section: XiaomiSection, selected: Boolean, onClick: () -> Unit) {
+    val p = LocalOvPalette.current
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (selected) p.selection.copy(alpha = 0.30f) else p.menuBg)
+            .clickable(onClick = onClick)
+            .padding(vertical = 7.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            section.icon, contentDescription = section.label,
+            tint = if (selected) p.icons else p.textSecondary,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(section.label, style = MaterialTheme.typography.labelSmall, color = p.controlText, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -334,7 +492,7 @@ private fun MonitorTool(controller: BoosterController, shizukuLabel: String) {
             Text("Leyendo…", style = MaterialTheme.typography.bodyMedium, color = LocalOvPalette.current.description)
         } else {
             val s = l.snapshot
-            val ring = (60 * iconScale).dp
+            val ring = (60 * iconScale * (if (LocalPanelStyle.current == PanelStyle.REDMAGIC) 1.2f else 0.95f)).dp
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 OvRing(
                     fraction = s.batteryPercent?.let { it / 100f }, label = "Batería",

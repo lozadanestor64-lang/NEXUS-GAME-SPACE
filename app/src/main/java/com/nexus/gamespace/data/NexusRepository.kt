@@ -13,6 +13,8 @@ import com.nexus.gamespace.domain.OverlayColors
 import com.nexus.gamespace.domain.GameProfile
 import com.nexus.gamespace.domain.OverlayPrefs
 import com.nexus.gamespace.domain.OverlaySide
+import com.nexus.gamespace.domain.PanelStyle
+import com.nexus.gamespace.domain.RgbSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -61,10 +63,12 @@ class NexusRepository(context: Context) {
             spacingDp = (it[OV_SPACING] ?: 8).coerceIn(OverlayPrefs.SPACING_RANGE),
             marginDp = (it[OV_MARGIN] ?: 8).coerceIn(OverlayPrefs.MARGIN_RANGE),
             animation = AnimationMode.entries.firstOrNull { m -> m.name == it[OV_ANIM] } ?: AnimationMode.NORMAL,
+            style = PanelStyle.entries.firstOrNull { st -> st.name == it[OV_STYLE] } ?: PanelStyle.REDMAGIC,
             hiddenTools = (it[OV_HIDDEN] ?: "").split(",").filter { id -> id.isNotBlank() }.toSet(),
         )
     }
     val crosshair: Flow<CrosshairSettings> = store.data.map { JsonCodec.decodeCrosshair(it[CROSSHAIR]) }
+    val overlayRgb: Flow<RgbSettings> = store.data.map { JsonCodec.decodeRgb(it[RGB]) }
     val overlayColors: Flow<OverlayColors> = store.data.map { JsonCodec.decodeColors(it[COLORS]) }
     val notes: Flow<String> = store.data.map { it[NOTES] ?: "" }
 
@@ -128,6 +132,7 @@ class NexusRepository(context: Context) {
             prefs[OV_SPACING] = p.spacingDp.coerceIn(OverlayPrefs.SPACING_RANGE)
             prefs[OV_MARGIN] = p.marginDp.coerceIn(OverlayPrefs.MARGIN_RANGE)
             prefs[OV_ANIM] = p.animation.name
+            prefs[OV_STYLE] = p.style.name
         }
     }
 
@@ -148,6 +153,10 @@ class NexusRepository(context: Context) {
             val current = JsonCodec.decodeCrosshair(prefs[CROSSHAIR])
             prefs[CROSSHAIR] = JsonCodec.encodeCrosshair(transform(current))
         }
+    }
+
+    suspend fun saveOverlayRgb(rgb: RgbSettings) {
+        store.edit { prefs -> prefs[RGB] = JsonCodec.encodeRgb(rgb) }
     }
 
     suspend fun saveOverlayColors(colors: OverlayColors) {
@@ -178,6 +187,8 @@ class NexusRepository(context: Context) {
         val OV_SPACING = intPreferencesKey("overlay_spacing")
         val OV_MARGIN = intPreferencesKey("overlay_margin")
         val OV_ANIM = stringPreferencesKey("overlay_animation")
+        val OV_STYLE = stringPreferencesKey("overlay_style")
+        val RGB = stringPreferencesKey("overlay_rgb_json")
         val GAMES = stringPreferencesKey("games_json")
         val PROFILES = stringPreferencesKey("profiles_json")
         val ACTIVE_PROFILE = stringPreferencesKey("active_profile")
