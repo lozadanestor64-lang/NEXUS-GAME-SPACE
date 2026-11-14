@@ -1,8 +1,5 @@
 # Cambios
 
-## 0.4.0 (en desarrollo) — corrección de compilación
-- Corregido `Unresolved reference: drawOutline` en `overlay/OverlayUi.kt`: se añadió la importación de `androidx.compose.ui.graphics.drawscope.drawOutline`.
-
 ## 0.4.0 (en desarrollo) — NEXUS RGB MODE y estilos REDMAGIC / XIAOMI
 - RGB MODE: global o selectivo (bordes, iconos, botones, anillos, fondo, iluminación), 6 efectos (Rainbow, Chroma, Spectrum, Gradient, Breathing, Color Wave), velocidad (lenta, normal, rápida, personalizada), dirección e intensidad, con vista previa en directo.
 - El RGB nunca afecta al texto ni a las alertas térmicas; los fondos solo reciben un tinte oscuro. Ahorro automático con batería baja y aviso para reducir efectos.

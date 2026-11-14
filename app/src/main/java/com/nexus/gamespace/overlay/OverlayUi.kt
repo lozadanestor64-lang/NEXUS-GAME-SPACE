@@ -42,14 +42,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawOutline
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -117,11 +114,8 @@ fun Modifier.ovFrame(
     borderWidth: Dp = 1.dp,
 ): Modifier = this
     .clip(shape)
-    .drawBehind {
-        drawRect(background())
-        val outline = shape.createOutline(size, layoutDirection, this)
-        drawOutline(outline, border(), style = Stroke(width = borderWidth.toPx() * 2f))
-    }
+    .background(background(), shape)
+    .border(borderWidth * 2f, border(), shape)
 
 @Composable
 fun OvCard(
