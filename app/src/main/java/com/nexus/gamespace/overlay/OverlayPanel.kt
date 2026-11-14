@@ -223,7 +223,7 @@ private fun PanelSurface(
                 PanelScreen.CROSSHAIR -> CrosshairContent(controller)
                 PanelScreen.ADD_GAMES -> AddGamesContent(controller) { screen = PanelScreen.MAIN }
                 PanelScreen.COLORS -> ColorStudioContent(
-                    colors = colors,
+                    colors = LocalOvPalette.current.colors,
                     onChange = { controller.saveColors(it) },
                 )
                 PanelScreen.SETTINGS -> PanelSettingsContent(
