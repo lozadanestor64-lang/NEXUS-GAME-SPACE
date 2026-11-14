@@ -338,7 +338,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         }
         val alpha = (prefs.alphaPercent / 100f * 255).toInt().coerceIn(100, 255)
         val bg = GradientDrawable().apply {
-            setColor((alpha shl 24) or (colors.raw(ColorRole.ACTIVE_BUTTON) and 0xFFFFFFL).toInt())
+            setColor((alpha shl 24) or (this@OverlayService.colors.raw(ColorRole.ACTIVE_BUTTON) and 0xFFFFFFL).toInt())
             cornerRadii = radii
             setStroke((1f * d).toInt().coerceAtLeast(1), 0x66FFFFFF)
         }
